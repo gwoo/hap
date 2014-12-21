@@ -24,7 +24,7 @@ type Remote struct {
 	Git     Git
 	Dir     string
 	Config  SshConfig
-	host    *Host
+	Host    *Host
 	session *ssh.Session
 	b       bytes.Buffer
 	mu      sync.Mutex
@@ -49,7 +49,7 @@ func NewRemote(host *Host) (*Remote, error) {
 	}
 	dir := filepath.Base(cwd)
 	repo := fmt.Sprintf("ssh://%s@%s/~/%s", config.Username, config.Addr, dir)
-	r := &Remote{Git: Git{Repo: repo}, Dir: dir, Config: config, host: host}
+	r := &Remote{Git: Git{Repo: repo}, Dir: dir, Config: config, Host: host}
 	return r, nil
 }
 
@@ -167,9 +167,9 @@ func (r *Remote) Execute(commands []string) ([]byte, error) {
 // Return preset environment variables to pass to execute
 func (r *Remote) Env() string {
 	return fmt.Sprint(
-		"export HAP_HOSTNAME=\"", r.host.Name, "\";",
-		"export HAP_ADDR=\"", r.host.Addr, "\";",
-		"export HAP_USER=\"", r.host.Username, "\";",
+		"export HAP_HOSTNAME=\"", r.Host.Name, "\";",
+		"export HAP_ADDR=\"", r.Host.Addr, "\";",
+		"export HAP_USER=\"", r.Host.Username, "\";",
 	)
 }
 
@@ -177,7 +177,7 @@ func (r *Remote) Env() string {
 func (r *Remote) Write(p []byte) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	name := []byte(fmt.Sprintf("[%s] ", r.host.Name))
+	name := []byte(fmt.Sprintf("[%s] ", r.Host.Name))
 	_, err := r.b.Write(append(name, p...))
 	return len(p), err
 }

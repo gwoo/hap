@@ -1,8 +1,10 @@
+// Hap - the simple and effective provisioner
+// Copyright (c) 2014 Garrett Woodworth (https://github.com/gwoo)
 package main
 
 import (
+	"flag"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/gwoo/hap"
@@ -112,10 +114,10 @@ func (cmd *ArbitraryCmd) Help() string {
 }
 
 func (cmd *ArbitraryCmd) Run(remote *hap.Remote) error {
-	if len(os.Args) <= 2 {
+	if len(flag.Args()) <= 1 {
 		return fmt.Errorf("%s", cmd.Help())
 	}
-	arbitrary := strings.Join(os.Args[2:], " ")
+	arbitrary := strings.Join(flag.Args()[1:], " ")
 	result, err := remote.Execute([]string{arbitrary})
 	cmd.result = result
 	cmd.log = fmt.Sprintf("Executed %s on %s.", arbitrary, remote.Config.Addr)
@@ -140,7 +142,7 @@ func (cmd *ExecCmd) Help() string {
 }
 
 func (cmd *ExecCmd) Run(remote *hap.Remote) error {
-	if len(os.Args) <= 2 {
+	if len(flag.Args()) <= 1 {
 		return fmt.Errorf("%s", cmd.Help())
 	}
 	push := commands.Get("push")
@@ -149,7 +151,7 @@ func (cmd *ExecCmd) Run(remote *hap.Remote) error {
 		cmd.result = []byte(push.String())
 		return err
 	}
-	ex := strings.Join(os.Args[2:], " ")
+	ex := strings.Join(flag.Args()[1:], " ")
 	result, err := remote.Execute([]string{"cd " + remote.Dir, "./" + ex})
 	cmd.result = result
 	cmd.log = fmt.Sprintf("Executed %s on %s.", cmd, remote.Config.Addr)
@@ -174,15 +176,15 @@ func (cmd *BuildCmd) Help() string {
 }
 
 func (cmd *BuildCmd) Run(remote *hap.Remote) error {
-	if len(os.Args) <= 2 {
+	if len(flag.Args()) <= 1 {
 		return fmt.Errorf("%s", cmd.Help())
 	}
-	result, err := remote.Build(os.Args[2])
+	result, err := remote.Build(flag.Arg(1))
 	cmd.result = result
 	if err != nil {
-		cmd.log = fmt.Sprintf("Build failed %s on %s.", os.Args[2], remote.Config.Addr)
+		cmd.log = fmt.Sprintf("Build failed %s on %s.", flag.Arg(1), remote.Config.Addr)
 		return err
 	}
-	cmd.log = fmt.Sprintf("Build %s on %s.", os.Args[2], remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Build %s on %s.", flag.Arg(1), remote.Config.Addr)
 	return nil
 }

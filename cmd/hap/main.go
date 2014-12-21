@@ -42,7 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if cmd := os.Args[1]; cmd != "" {
+	if cmd := flag.Arg(0); cmd != "" {
 		run(remote, cmd)
 		return
 	}
@@ -51,6 +51,7 @@ func main() {
 func run(remote *hap.Remote, cmd string) {
 	if strings.Contains(cmd, ".json") {
 		os.Args = append(os.Args, cmd)
+		flag.Parse()
 		cmd = "build"
 	}
 	if command := commands.Get(cmd); command != nil {

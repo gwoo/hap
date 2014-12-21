@@ -15,10 +15,12 @@ type Config struct {
 
 func (h Config) Server(name string) *Server {
 	if server, ok := h.Servers[name]; ok {
+		server.Name = name
 		server.SetDefaults(h.Default)
 		return server
 	}
-	for _, server := range h.Servers {
+	for name, server := range h.Servers {
+		server.Name = name
 		server.SetDefaults(h.Default)
 		return server
 	}

@@ -16,8 +16,10 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// Formatted script that checks if the build happened.
 const happened string = "if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; then echo \"[%s] Already completed. Commit again?\"; exit 2; fi"
 
+// The remote machine to provision
 type Remote struct {
 	Git     Git
 	Dir     string
@@ -28,6 +30,7 @@ type Remote struct {
 	mu      sync.Mutex
 }
 
+// Construct a new remote machine
 func NewRemote(server *Server) (*Remote, error) {
 	config := SshConfig{
 		Addr:     server.Addr,
@@ -50,6 +53,7 @@ func NewRemote(server *Server) (*Remote, error) {
 	return r, nil
 }
 
+// Start ssh session to remote machine.
 func (r *Remote) Connect() error {
 	if r.session != nil {
 		return nil
@@ -66,6 +70,7 @@ func (r *Remote) Connect() error {
 	return nil
 }
 
+// End session with remote machine
 func (r *Remote) Close() error {
 	if r.session != nil {
 		err := r.session.Close()
@@ -75,19 +80,14 @@ func (r *Remote) Close() error {
 	return nil
 }
 
+// Setup a git repo on the remote machine
 func (r *Remote) Initialize() ([]byte, error) {
 	results := []byte{}
 	if err := r.Connect(); err != nil {
 		return results, err
 	}
-	env := fmt.Sprint(
-		"GIT_DIR=", r.Dir, ";",
-		"HAP_HOSTNAME=", r.server.Name, ";",
-		"HAP_ADDR=", r.server.Addr, ";",
-		"HAP_USER=", r.server.Username, ";",
-	)
 	commands := []string{
-		fmt.Sprint(env),
+		fmt.Sprintf("GIT_DIR=\"%s\"", r.Dir),
 		fmt.Sprint("mkdir -p $GIT_DIR"),
 		fmt.Sprint("cd $GIT_DIR"),
 		fmt.Sprint("git init"),
@@ -153,12 +153,21 @@ func (r *Remote) Execute(commands []string) ([]byte, error) {
 	defer r.Close()
 	r.session.Stdout = r
 	r.session.Stderr = r
-	cmd := commands[0]
+	cmd := fmt.Sprintf("%s%s", r.Env(), commands[0])
 	if len(commands) > 1 {
-		cmd = fmt.Sprintf("sh -c '%s'", strings.Join(commands, "&&"))
+		cmd = fmt.Sprintf("sh -c '%s%s'", r.Env(), strings.Join(commands, "&&"))
 	}
 	err := r.session.Run(cmd)
 	return r.b.Bytes(), err
+}
+
+// Return preset environment variables to pass to execute
+func (r *Remote) Env() string {
+	return fmt.Sprint(
+		"export HAP_HOSTNAME=\"", r.server.Name, "\";",
+		"export HAP_ADDR=\"", r.server.Addr, "\";",
+		"export HAP_USER=\"", r.server.Username, "\";",
+	)
 }
 
 func (r *Remote) Write(p []byte) (int, error) {

@@ -34,7 +34,7 @@ func (g Git) Push(branch string) ([]byte, error) {
 	if branch == "" {
 		branch = "master"
 	}
-	cmd := exec.Command("git", "push", "-q", g.Repo, branch)
+	cmd := exec.Command("git", "push", "-f", "-q", g.Repo, branch)
 	cmd.Dir = g.Work
 	return cmd.CombinedOutput()
 }

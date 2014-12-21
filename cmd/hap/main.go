@@ -31,9 +31,10 @@ func main() {
 	}
 	logger = VerboseLogger(*v)
 	if cmd := flag.Arg(0); cmd != "" {
-		servers := map[string]*hap.Server{*s: cfg.Server(*s)}
-		if *all == true {
-			servers = cfg.Servers
+		servers := cfg.Servers
+		if *all == false {
+			server := cfg.Server(*s)
+			servers = map[string]*hap.Server{server.Name: server}
 		}
 		done := make(chan bool, len(servers))
 		cmdChan := make(chan Command, len(servers))

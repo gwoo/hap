@@ -70,7 +70,7 @@ func (cmd *InitCmd) Run(remote *hap.Remote) error {
 		return err
 	}
 	if len(cmd.result) <= 0 {
-		cmd.result = []byte("Init successful.")
+		cmd.result = []byte("Init successful.\n")
 	}
 	cmd.log = fmt.Sprintf("%s initialized on %s.", remote.Dir, remote.Config.Addr)
 	return nil
@@ -101,7 +101,7 @@ func (cmd *PushCmd) Run(remote *hap.Remote) error {
 		return err
 	}
 	if len(cmd.result) <= 0 {
-		cmd.result = []byte("Push successful.")
+		cmd.result = []byte("Push successful.\n")
 	}
 	cmd.log = fmt.Sprintf("Pushed to %s.", remote.Config.Addr)
 	return nil

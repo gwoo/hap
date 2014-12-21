@@ -13,6 +13,7 @@ import (
 )
 
 var s = flag.String("s", "", "Individual server to use for commands. If empty first server will be used.")
+var v = flag.Bool("v", false, "Verbose flag to print output")
 
 //var all = flag.Bool("all", false, "Use ALL the servers.")
 
@@ -48,62 +49,21 @@ func main() {
 }
 
 func run(remote *hap.Remote, cmd string) {
-	scripts := ""
 	if strings.Contains(cmd, ".json") {
-		scripts = cmd
+		os.Args = append(os.Args, cmd)
 		cmd = "build"
 	}
-	switch cmd {
-	case "init":
-		result, err := remote.Initialize()
+	if command := commands.Get(cmd); command != nil {
+		err := command.Run(remote)
+		fmt.Print(command)
 		if err != nil {
-			fmt.Print(string(result))
-			log.Fatal(err)
+			fmt.Println(err)
 		}
-		log.Printf("%s initialized on %s.", remote.Dir, remote.Config.Addr)
-	case "push":
-		result, err := remote.Push()
-		if err != nil {
-			fmt.Print(string(result))
-			log.Fatal(err)
+		if command.String() == "" || *v == true {
+			log.Println(command.Log())
 		}
-		log.Printf("%s pushed to %s.", remote.Dir, remote.Config.Addr)
-	case "-c":
-		if len(os.Args) <= 2 {
-			log.Fatal("Missing arguments.")
-		}
-		cmd := strings.Join(os.Args[2:], " ")
-		result, err := remote.Execute([]string{cmd})
-		if string(result) == "" {
-			log.Printf("Executed %s to %s.", cmd, remote.Config.Addr)
-		}
-		fmt.Print(string(result))
-		if err != nil {
-			log.Fatal(err)
-		}
-	case "exec":
-		if len(os.Args) <= 2 {
-			log.Fatal("Missing arguments.")
-		}
-		result, err := remote.Push()
-		if err != nil {
-			fmt.Print(string(result))
-			log.Fatal(err)
-		}
-		cmd := strings.Join(os.Args[2:], " ")
-		result, err = remote.Execute([]string{"cd " + remote.Dir, "bash " + cmd})
-		if string(result) == "" {
-			log.Printf("Executed %s to %s.", cmd, remote.Config.Addr)
-		}
-		fmt.Print(string(result))
-		if err != nil {
-			log.Fatal(err)
-		}
-	case "build":
-		result, err := remote.Build(scripts)
-		fmt.Print(string(result))
-		if err != nil {
-			log.Fatal(err)
-		}
+		return
 	}
+	log.Fatalf("Command `%s` not found.", cmd)
+
 }

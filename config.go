@@ -40,6 +40,7 @@ type Default struct {
 }
 
 type Server struct {
+	Name     string
 	Addr     string
 	Username string
 	Identity string

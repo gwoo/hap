@@ -27,6 +27,11 @@ func (c Commands) Add(name string, cmd Command) {
 }
 
 func (c Commands) Get(name string) Command {
+	if strings.Contains(name, ".json") {
+		command := commands["build"].(*BuildCmd)
+		command.build = name
+		return command
+	}
 	if command, ok := commands[name]; ok {
 		return command
 	}
@@ -64,6 +69,9 @@ func (cmd *InitCmd) Run(remote *hap.Remote) error {
 		cmd.log = fmt.Sprintf("%s failed to initialize on %s.", remote.Dir, remote.Config.Addr)
 		return err
 	}
+	if len(cmd.result) <= 0 {
+		cmd.result = []byte("Init successful.")
+	}
 	cmd.log = fmt.Sprintf("%s initialized on %s.", remote.Dir, remote.Config.Addr)
 	return nil
 }
@@ -92,6 +100,9 @@ func (cmd *PushCmd) Run(remote *hap.Remote) error {
 		cmd.log = fmt.Sprintf("Failed to push to %s.", remote.Config.Addr)
 		return err
 	}
+	if len(cmd.result) <= 0 {
+		cmd.result = []byte("Push successful.")
+	}
 	cmd.log = fmt.Sprintf("Pushed to %s.", remote.Config.Addr)
 	return nil
 }
@@ -114,13 +125,14 @@ func (cmd *ArbitraryCmd) Help() string {
 }
 
 func (cmd *ArbitraryCmd) Run(remote *hap.Remote) error {
-	if len(flag.Args()) <= 1 {
+	args := flag.Args()
+	if len(args) <= 1 {
 		return fmt.Errorf("%s", cmd.Help())
 	}
-	arbitrary := strings.Join(flag.Args()[1:], " ")
+	arbitrary := strings.Join(args[1:], " ")
 	result, err := remote.Execute([]string{arbitrary})
 	cmd.result = result
-	cmd.log = fmt.Sprintf("Executed %s on %s.", arbitrary, remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Executed `%s` on %s.", arbitrary, remote.Config.Addr)
 	return err
 }
 
@@ -142,7 +154,8 @@ func (cmd *ExecCmd) Help() string {
 }
 
 func (cmd *ExecCmd) Run(remote *hap.Remote) error {
-	if len(flag.Args()) <= 1 {
+	args := flag.Args()
+	if len(args) <= 1 {
 		return fmt.Errorf("%s", cmd.Help())
 	}
 	push := commands.Get("push")
@@ -151,16 +164,17 @@ func (cmd *ExecCmd) Run(remote *hap.Remote) error {
 		cmd.result = []byte(push.String())
 		return err
 	}
-	ex := strings.Join(flag.Args()[1:], " ")
+	ex := strings.Join(args[1:], " ")
 	result, err := remote.Execute([]string{"cd " + remote.Dir, "./" + ex})
 	cmd.result = result
-	cmd.log = fmt.Sprintf("Executed %s on %s.", cmd, remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Executed `%s` on %s.", args[1], remote.Config.Addr)
 	return err
 }
 
 type BuildCmd struct {
 	result []byte
 	log    string
+	build  string
 }
 
 func (cmd *BuildCmd) String() string {
@@ -172,19 +186,21 @@ func (cmd *BuildCmd) Log() string {
 }
 
 func (cmd *BuildCmd) Help() string {
-	return "Push current repo to the remote."
+	return fmt.Sprintf("%s\n%s",
+		"hap <build.json> : Run the scripts provided by the json formatted build list.",
+	)
 }
 
 func (cmd *BuildCmd) Run(remote *hap.Remote) error {
-	if len(flag.Args()) <= 1 {
+	if cmd.build == "" {
 		return fmt.Errorf("%s", cmd.Help())
 	}
-	result, err := remote.Build(flag.Arg(1))
+	result, err := remote.Build(cmd.build)
 	cmd.result = result
 	if err != nil {
-		cmd.log = fmt.Sprintf("Build failed %s on %s.", flag.Arg(1), remote.Config.Addr)
+		cmd.log = fmt.Sprintf("Build failed %s on %s.", cmd.build, remote.Config.Addr)
 		return err
 	}
-	cmd.log = fmt.Sprintf("Build %s on %s.", flag.Arg(1), remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Build %s on %s.", cmd.build, remote.Config.Addr)
 	return nil
 }

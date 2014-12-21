@@ -3,6 +3,7 @@
 package hap
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,18 +11,30 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/crypto/ssh"
 )
+
+const happened string = "if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; then echo \"[%s] Already completed. Commit again?\"; exit 2; fi"
 
 type Remote struct {
 	Git     Git
 	Dir     string
 	Config  SshConfig
+	server  *Server
 	session *ssh.Session
+	b       bytes.Buffer
+	mu      sync.Mutex
 }
 
-func NewRemote(config SshConfig) (*Remote, error) {
+func NewRemote(server *Server) (*Remote, error) {
+	config := SshConfig{
+		Addr:     server.Addr,
+		Username: server.Username,
+		Identity: server.Identity,
+		Password: server.Password,
+	}
 	cfg, err := NewClientConfig(config)
 	if err != nil {
 		return nil, err
@@ -33,7 +46,7 @@ func NewRemote(config SshConfig) (*Remote, error) {
 	}
 	dir := filepath.Base(cwd)
 	repo := fmt.Sprintf("ssh://%s@%s/~/%s", config.Username, config.Addr, dir)
-	r := &Remote{Git: Git{Repo: repo}, Dir: dir, Config: config}
+	r := &Remote{Git: Git{Repo: repo}, Dir: dir, Config: config, server: server}
 	return r, nil
 }
 
@@ -67,7 +80,12 @@ func (r *Remote) Initialize() ([]byte, error) {
 	if err := r.Connect(); err != nil {
 		return results, err
 	}
-	env := fmt.Sprint("GIT_DIR=", r.Dir)
+	env := fmt.Sprint(
+		"GIT_DIR=", r.Dir, ";",
+		"HAP_HOSTNAME=", r.server.Name, ";",
+		"HAP_ADDR=", r.server.Addr, ";",
+		"HAP_USER=", r.server.Username, ";",
+	)
 	commands := []string{
 		fmt.Sprint(env),
 		fmt.Sprint("mkdir -p $GIT_DIR"),
@@ -120,7 +138,7 @@ func (r *Remote) Build(script string) ([]byte, error) {
 	cmds := []string{
 		"cd " + r.Dir,
 		"touch .happended",
-		"if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; then echo \"Already completed. Commit again?\"; exit 2; fi",
+		fmt.Sprintf(happened, r.server.Name),
 	}
 	data = append(cmds, data...)
 	data = append(data, "echo `git rev-parse HEAD` > .happended")
@@ -133,13 +151,20 @@ func (r *Remote) Execute(commands []string) ([]byte, error) {
 		return results, err
 	}
 	defer r.Close()
-	var writer SshWriter
-	r.session.Stdout = &writer
-	r.session.Stderr = &writer
+	r.session.Stdout = r
+	r.session.Stderr = r
 	cmd := commands[0]
 	if len(commands) > 1 {
 		cmd = fmt.Sprintf("sh -c '%s'", strings.Join(commands, "&&"))
 	}
 	err := r.session.Run(cmd)
-	return append(results, writer.b.Bytes()...), err
+	return r.b.Bytes(), err
+}
+
+func (r *Remote) Write(p []byte) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	name := []byte(fmt.Sprintf("[%s] ", r.server.Name))
+	_, err := r.b.Write(append(name, p...))
+	return len(p), err
 }

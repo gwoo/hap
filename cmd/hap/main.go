@@ -7,15 +7,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/gwoo/hap"
 )
 
 var s = flag.String("s", "", "Individual server to use for commands. If empty first server will be used.")
 var v = flag.Bool("v", false, "Verbose flag to print output")
-
-//var all = flag.Bool("all", false, "Use ALL the servers.")
+var all = flag.Bool("all", false, "Use ALL the servers.")
+var logger VerboseLogger
 
 func main() {
 	flag.Parse()
@@ -30,41 +29,55 @@ func main() {
 		flag.Usage()
 		return
 	}
-	server := cfg.Server(*s)
-	config := hap.SshConfig{
-		Addr:     server.Addr,
-		Username: server.Username,
-		Identity: server.Identity,
-		Password: server.Password,
-	}
-	remote, err := hap.NewRemote(config)
-	defer remote.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
+	logger = VerboseLogger(*v)
 	if cmd := flag.Arg(0); cmd != "" {
-		run(remote, cmd)
-		return
+		servers := map[string]*hap.Server{*s: cfg.Server(*s)}
+		if *all == true {
+			servers = cfg.Servers
+		}
+		done := make(chan bool, len(servers))
+		cmdChan := make(chan Command, len(servers))
+		errChan := make(chan error, len(servers))
+		for name, server := range servers {
+			server.Name = name
+			server.SetDefaults(cfg.Default)
+			logger.Printf("[%s] Running `%s` on %s\n", server.Name, cmd, server.Addr)
+			go start(server, cmd, cmdChan, errChan)
+		}
+		for _, server := range servers {
+			go display(server, cmd, cmdChan, errChan, done)
+			<-done
+		}
 	}
 }
 
-func run(remote *hap.Remote, cmd string) {
-	if strings.Contains(cmd, ".json") {
-		os.Args = append(os.Args, cmd)
-		flag.Parse()
-		cmd = "build"
+func start(server *hap.Server, cmd string, cmdChan chan Command, errChan chan error) {
+	command, err := run(server, cmd)
+	cmdChan <- command
+	errChan <- err
+}
+
+func run(server *hap.Server, cmd string) (Command, error) {
+	remote, err := hap.NewRemote(server)
+	defer remote.Close()
+	if err != nil {
+		return nil, err
 	}
 	if command := commands.Get(cmd); command != nil {
 		err := command.Run(remote)
-		fmt.Print(command)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if command.String() == "" || *v == true {
-			log.Println(command.Log())
-		}
-		return
+		return command, err
 	}
-	log.Fatalf("Command `%s` not found.", cmd)
+	return nil, fmt.Errorf("Command `%s` not found.", cmd)
+}
 
+func display(server *hap.Server, cmd string, cmdChan chan Command, errChan chan error, done chan bool) {
+	logger.Printf("[%s] Results of `%s` on %s\n", server.Name, cmd, server.Addr)
+	command := <-cmdChan
+	err := <-errChan
+	fmt.Print(command.String())
+	if err != nil {
+		logger.Printf("[%s] %s\n", server.Name, err)
+	}
+	logger.Printf("[%s] %s\n", server.Name, command.Log())
+	done <- true
 }

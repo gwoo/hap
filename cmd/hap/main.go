@@ -21,7 +21,7 @@ func main() {
 	if err := new(hap.Git).Exists(); err != nil {
 		log.Fatal(err)
 	}
-	cfg, err := hap.NewConfig()
+	hf, err := hap.NewHapfile()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,9 +31,9 @@ func main() {
 	}
 	logger = VerboseLogger(*v)
 	if cmd := flag.Arg(0); cmd != "" {
-		servers := cfg.Servers
+		servers := hf.Servers
 		if *all == false {
-			server := cfg.Server(*s)
+			server := hf.Server(*s)
 			servers = map[string]*hap.Server{server.Name: server}
 		}
 		done := make(chan bool, len(servers))
@@ -41,7 +41,7 @@ func main() {
 		errChan := make(chan error, len(servers))
 		for name, server := range servers {
 			server.Name = name
-			server.SetDefaults(cfg.Default)
+			server.SetDefaults(hf.Default)
 			logger.Printf("[%s] Running `%s` on %s\n", server.Name, cmd, server.Addr)
 			go start(server, cmd, cmdChan, errChan)
 		}

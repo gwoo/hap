@@ -8,16 +8,25 @@ import (
 	"code.google.com/p/gcfg"
 )
 
-type Config struct {
+// The Hapfile
+type Hapfile struct {
 	Default Default
 	Servers map[string]*Server `gcfg:"server"`
 }
 
-func (h Config) Server(name string) *Server {
+// Get a server based on the name
+// If the name is empty, and if default addr exists, return default
+// otherwise return a random server
+func (h Hapfile) Server(name string) *Server {
 	if server, ok := h.Servers[name]; ok {
 		server.Name = name
 		server.SetDefaults(h.Default)
 		return server
+	}
+	if h.Default.Addr != "" {
+		server := Server(h.Default)
+		server.Name = "default"
+		return &server
 	}
 	for name, server := range h.Servers {
 		server.Name = name
@@ -27,7 +36,8 @@ func (h Config) Server(name string) *Server {
 	return nil
 }
 
-func (h Config) String() string {
+// Return the hapfile config as json
+func (h Hapfile) String() string {
 	b, err := json.Marshal(h)
 	if err != nil {
 		return ""
@@ -35,12 +45,10 @@ func (h Config) String() string {
 	return string(b)
 }
 
-type Default struct {
-	Username string
-	Identity string
-	Password string
-}
+// The default settings
+type Default Server
 
+// A remote machine
 type Server struct {
 	Name     string
 	Addr     string
@@ -49,6 +57,7 @@ type Server struct {
 	Password string
 }
 
+// Use the defaults to fill in missing server specific config
 func (s *Server) SetDefaults(d Default) {
 	if s.Username == "" {
 		s.Username = d.Username
@@ -60,8 +69,10 @@ func (s *Server) SetDefaults(d Default) {
 		s.Password = d.Password
 	}
 }
-func NewConfig() (Config, error) {
-	var cfg Config
-	err := gcfg.ReadFileInto(&cfg, "Hapfile")
-	return cfg, err
+
+// Construct a new hapfile config
+func NewHapfile() (Hapfile, error) {
+	var hf Hapfile
+	err := gcfg.ReadFileInto(&hf, "Hapfile")
+	return hf, err
 }

@@ -3,19 +3,18 @@
 package hap
 
 import (
-	"bytes"
 	"io/ioutil"
 	"net"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
 
+// Config necessary for ssh connections
 type SshConfig struct {
 	Addr         string
 	Username     string
@@ -24,6 +23,7 @@ type SshConfig struct {
 	ClientConfig *ssh.ClientConfig
 }
 
+// Construct a new client config
 func NewClientConfig(config SshConfig) (*ssh.ClientConfig, error) {
 	sock, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
 	if err != nil {
@@ -53,6 +53,7 @@ func NewClientConfig(config SshConfig) (*ssh.ClientConfig, error) {
 	return cfg, nil
 }
 
+// Get the data in the key file
 func NewKeyFile(key string) (string, error) {
 	if string(key[0]) == "~" {
 		u, err := user.Current()
@@ -64,6 +65,7 @@ func NewKeyFile(key string) (string, error) {
 	return filepath.EvalSymlinks(key)
 }
 
+// Parse and return the interface for the key type (rsa, dss, etc)
 func NewKey(key string) (interface{}, error) {
 	file, err := NewKeyFile(key)
 	if err != nil {
@@ -74,15 +76,4 @@ func NewKey(key string) (interface{}, error) {
 		return nil, err
 	}
 	return ssh.ParseRawPrivateKey(b)
-}
-
-type SshWriter struct {
-	b  bytes.Buffer
-	mu sync.Mutex
-}
-
-func (w *SshWriter) Write(p []byte) (int, error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return w.b.Write(p)
 }

@@ -24,19 +24,19 @@ type Remote struct {
 	Git     Git
 	Dir     string
 	Config  SshConfig
-	server  *Server
+	host    *Host
 	session *ssh.Session
 	b       bytes.Buffer
 	mu      sync.Mutex
 }
 
 // Construct a new remote machine
-func NewRemote(server *Server) (*Remote, error) {
+func NewRemote(host *Host) (*Remote, error) {
 	config := SshConfig{
-		Addr:     server.Addr,
-		Username: server.Username,
-		Identity: server.Identity,
-		Password: server.Password,
+		Addr:     host.Addr,
+		Username: host.Username,
+		Identity: host.Identity,
+		Password: host.Password,
 	}
 	cfg, err := NewClientConfig(config)
 	if err != nil {
@@ -49,7 +49,7 @@ func NewRemote(server *Server) (*Remote, error) {
 	}
 	dir := filepath.Base(cwd)
 	repo := fmt.Sprintf("ssh://%s@%s/~/%s", config.Username, config.Addr, dir)
-	r := &Remote{Git: Git{Repo: repo}, Dir: dir, Config: config, server: server}
+	r := &Remote{Git: Git{Repo: repo}, Dir: dir, Config: config, host: host}
 	return r, nil
 }
 
@@ -167,9 +167,9 @@ func (r *Remote) Execute(commands []string) ([]byte, error) {
 // Return preset environment variables to pass to execute
 func (r *Remote) Env() string {
 	return fmt.Sprint(
-		"export HAP_HOSTNAME=\"", r.server.Name, "\";",
-		"export HAP_ADDR=\"", r.server.Addr, "\";",
-		"export HAP_USER=\"", r.server.Username, "\";",
+		"export HAP_HOSTNAME=\"", r.host.Name, "\";",
+		"export HAP_ADDR=\"", r.host.Addr, "\";",
+		"export HAP_USER=\"", r.host.Username, "\";",
 	)
 }
 
@@ -177,7 +177,7 @@ func (r *Remote) Env() string {
 func (r *Remote) Write(p []byte) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	name := []byte(fmt.Sprintf("[%s] ", r.server.Name))
+	name := []byte(fmt.Sprintf("[%s] ", r.host.Name))
 	_, err := r.b.Write(append(name, p...))
 	return len(p), err
 }

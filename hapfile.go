@@ -11,27 +11,27 @@ import (
 // The Hapfile
 type Hapfile struct {
 	Default Default
-	Servers map[string]*Server `gcfg:"server"`
+	Hosts   map[string]*Host `gcfg:"host"`
 }
 
-// Get a server based on the name
+// Get a host based on the name
 // If the name is empty, and if default addr exists, return default
-// otherwise return a random server
-func (h Hapfile) Server(name string) *Server {
-	if server, ok := h.Servers[name]; ok {
-		server.Name = name
-		server.SetDefaults(h.Default)
-		return server
+// otherwise return a random host
+func (h Hapfile) Host(name string) *Host {
+	if host, ok := h.Hosts[name]; ok {
+		host.Name = name
+		host.SetDefaults(h.Default)
+		return host
 	}
 	if h.Default.Addr != "" {
-		server := Server(h.Default)
-		server.Name = "default"
-		return &server
+		host := Host(h.Default)
+		host.Name = "default"
+		return &host
 	}
-	for name, server := range h.Servers {
-		server.Name = name
-		server.SetDefaults(h.Default)
-		return server
+	for name, host := range h.Hosts {
+		host.Name = name
+		host.SetDefaults(h.Default)
+		return host
 	}
 	return nil
 }
@@ -46,10 +46,10 @@ func (h Hapfile) String() string {
 }
 
 // The default settings
-type Default Server
+type Default Host
 
 // A remote machine
-type Server struct {
+type Host struct {
 	Name     string
 	Addr     string
 	Username string
@@ -57,8 +57,8 @@ type Server struct {
 	Password string
 }
 
-// Use the defaults to fill in missing server specific config
-func (s *Server) SetDefaults(d Default) {
+// Use the defaults to fill in missing host specific config
+func (s *Host) SetDefaults(d Default) {
 	if s.Username == "" {
 		s.Username = d.Username
 	}

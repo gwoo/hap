@@ -59,7 +59,7 @@ func (cmd *InitCmd) Log() string {
 }
 
 func (cmd *InitCmd) Help() string {
-	return "Initialize a new remote server."
+	return "Initialize a new remote host."
 }
 
 func (cmd *InitCmd) Run(remote *hap.Remote) error {
@@ -150,7 +150,7 @@ func (cmd *ExecCmd) Log() string {
 }
 
 func (cmd *ExecCmd) Help() string {
-	return "Execute a script on the remote server."
+	return "Execute a script on the remote host."
 }
 
 func (cmd *ExecCmd) Run(remote *hap.Remote) error {

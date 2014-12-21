@@ -11,9 +11,9 @@ import (
 	"github.com/gwoo/hap"
 )
 
-var s = flag.String("s", "", "Individual server to use for commands. If empty first server will be used.")
+var h = flag.String("h", "", "Individual host to use for commands. If empty, the default or a random host is used.")
 var v = flag.Bool("v", false, "Verbose flag to print output")
-var all = flag.Bool("all", false, "Use ALL the servers.")
+var all = flag.Bool("all", false, "Use ALL the hosts.")
 var logger VerboseLogger
 
 func main() {
@@ -31,35 +31,35 @@ func main() {
 	}
 	logger = VerboseLogger(*v)
 	if cmd := flag.Arg(0); cmd != "" {
-		servers := hf.Servers
+		hosts := hf.Hosts
 		if *all == false {
-			server := hf.Server(*s)
-			servers = map[string]*hap.Server{server.Name: server}
+			host := hf.Host(*h)
+			hosts = map[string]*hap.Host{host.Name: host}
 		}
-		done := make(chan bool, len(servers))
-		cmdChan := make(chan Command, len(servers))
-		errChan := make(chan error, len(servers))
-		for name, server := range servers {
-			server.Name = name
-			server.SetDefaults(hf.Default)
-			logger.Printf("[%s] Running `%s` on %s\n", server.Name, cmd, server.Addr)
-			go start(server, cmd, cmdChan, errChan)
+		done := make(chan bool, len(hosts))
+		cmdChan := make(chan Command, len(hosts))
+		errChan := make(chan error, len(hosts))
+		for name, host := range hosts {
+			host.Name = name
+			host.SetDefaults(hf.Default)
+			logger.Printf("[%s] Running `%s` on %s\n", host.Name, cmd, host.Addr)
+			go start(host, cmd, cmdChan, errChan)
 		}
-		for _, server := range servers {
-			go display(server, cmd, cmdChan, errChan, done)
+		for _, host := range hosts {
+			go display(host, cmd, cmdChan, errChan, done)
 			<-done
 		}
 	}
 }
 
-func start(server *hap.Server, cmd string, cmdChan chan Command, errChan chan error) {
-	command, err := run(server, cmd)
+func start(host *hap.Host, cmd string, cmdChan chan Command, errChan chan error) {
+	command, err := run(host, cmd)
 	cmdChan <- command
 	errChan <- err
 }
 
-func run(server *hap.Server, cmd string) (Command, error) {
-	remote, err := hap.NewRemote(server)
+func run(host *hap.Host, cmd string) (Command, error) {
+	remote, err := hap.NewRemote(host)
 	defer remote.Close()
 	if err != nil {
 		return nil, err
@@ -71,14 +71,14 @@ func run(server *hap.Server, cmd string) (Command, error) {
 	return nil, fmt.Errorf("Command `%s` not found.", cmd)
 }
 
-func display(server *hap.Server, cmd string, cmdChan chan Command, errChan chan error, done chan bool) {
-	logger.Printf("[%s] Results of `%s` on %s\n", server.Name, cmd, server.Addr)
+func display(host *hap.Host, cmd string, cmdChan chan Command, errChan chan error, done chan bool) {
+	logger.Printf("[%s] Results of `%s` on %s\n", host.Name, cmd, host.Addr)
 	command := <-cmdChan
 	err := <-errChan
 	fmt.Print(command.String())
 	if err != nil {
-		logger.Printf("[%s] %s\n", server.Name, err)
+		logger.Printf("[%s] %s\n", host.Name, err)
 	}
-	logger.Printf("[%s] %s\n", server.Name, command.Log())
+	logger.Printf("[%s] %s\n", host.Name, command.Log())
 	done <- true
 }

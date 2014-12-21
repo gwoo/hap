@@ -17,7 +17,7 @@ import (
 )
 
 // Formatted script that checks if the build happened.
-const happened string = "if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; then echo \"[%s] Already completed. Commit again?\"; exit 2; fi"
+const happened string = "if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; then echo \"Already completed. Commit again?\"; exit 2; fi"
 
 // The remote machine to provision
 type Remote struct {
@@ -99,6 +99,7 @@ func (r *Remote) Initialize() ([]byte, error) {
 	return r.Execute(commands)
 }
 
+// Update repo on the remote machine
 func (r *Remote) Push() ([]byte, error) {
 	results := []byte{}
 	if err := r.Connect(); err != nil {
@@ -121,12 +122,13 @@ func (r *Remote) Push() ([]byte, error) {
 	return r.Git.Push(strings.TrimSpace(string(branch)))
 }
 
-func (r *Remote) Build(script string) ([]byte, error) {
+// Read a json file for a list of commands to execute.
+func (r *Remote) Build(list string) ([]byte, error) {
 	results, err := r.Push()
 	if err != nil {
 		return results, err
 	}
-	file, err := ioutil.ReadFile(script)
+	file, err := ioutil.ReadFile(list)
 	if err != nil {
 		return file, err
 	}
@@ -138,13 +140,14 @@ func (r *Remote) Build(script string) ([]byte, error) {
 	cmds := []string{
 		"cd " + r.Dir,
 		"touch .happended",
-		fmt.Sprintf(happened, r.server.Name),
+		happened,
 	}
 	data = append(cmds, data...)
 	data = append(data, "echo `git rev-parse HEAD` > .happended")
 	return r.Execute(data)
 }
 
+// Shell out to the multiple commands or run one
 func (r *Remote) Execute(commands []string) ([]byte, error) {
 	results := []byte{}
 	if err := r.Connect(); err != nil {
@@ -170,6 +173,7 @@ func (r *Remote) Env() string {
 	)
 }
 
+// Implement io.Writer for printing messages from remote.
 func (r *Remote) Write(p []byte) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

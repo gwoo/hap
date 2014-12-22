@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/gwoo/hap"
+	"github.com/gwoo/hap/cmd/hap/cli"
 )
 
 var h = flag.String("h", "", "Individual host to use for commands. If empty, the default or a random host is used.")
@@ -37,7 +38,7 @@ func main() {
 			hosts = map[string]*hap.Host{host.Name: host}
 		}
 		done := make(chan bool, len(hosts))
-		cmdChan := make(chan Command, len(hosts))
+		cmdChan := make(chan cli.Command, len(hosts))
 		errChan := make(chan error, len(hosts))
 		for name, host := range hosts {
 			host.Name = name
@@ -52,26 +53,26 @@ func main() {
 	}
 }
 
-func start(host *hap.Host, cmd string, cmdChan chan Command, errChan chan error) {
+func start(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan error) {
 	command, err := run(host, cmd)
 	cmdChan <- command
 	errChan <- err
 }
 
-func run(host *hap.Host, cmd string) (Command, error) {
+func run(host *hap.Host, cmd string) (cli.Command, error) {
 	remote, err := hap.NewRemote(host)
 	defer remote.Close()
 	if err != nil {
 		return nil, err
 	}
-	if command := commands.Get(cmd); command != nil {
+	if command := cli.Commands.Get(cmd); command != nil {
 		err := command.Run(remote)
 		return command, err
 	}
 	return nil, fmt.Errorf("Command `%s` not found.", cmd)
 }
 
-func display(host *hap.Host, cmd string, cmdChan chan Command, errChan chan error, done chan bool) {
+func display(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan error, done chan bool) {
 	logger.Printf("[%s] Results of `%s` on %s\n", host.Name, cmd, host.Addr)
 	command := <-cmdChan
 	err := <-errChan

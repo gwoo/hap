@@ -44,3 +44,5 @@ Host one specifies two commands, notify.sh and cleanup.sh, to be run after the d
 	hap init		Initialize a new remote host.
 	hap push		Push current repo to the remote.
 
+## License
+The BSD License http://opensource.org/licenses/bsd-license.php.

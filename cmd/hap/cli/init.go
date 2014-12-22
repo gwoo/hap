@@ -31,7 +31,7 @@ func (cmd *InitCmd) Log() string {
 
 // Get help on the init command
 func (cmd *InitCmd) Help() string {
-	return "Initialize a new remote host."
+	return "hap init\t\t\tInitialize a new remote host."
 }
 
 // Run the command against the remote

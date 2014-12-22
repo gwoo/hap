@@ -7,17 +7,19 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"text/tabwriter"
 
 	"github.com/gwoo/hap"
 	"github.com/gwoo/hap/cmd/hap/cli"
 )
 
-var h = flag.String("h", "", "Individual host to use for commands. If empty, the default or a random host is used.")
+var h = flag.String("h", "", "Individual host to use for commands.\n\t If empty, the default or a random host is used.")
 var v = flag.Bool("v", false, "Verbose flag to print output")
 var all = flag.Bool("all", false, "Use ALL the hosts.")
 var logger VerboseLogger
 
 func main() {
+	flag.Usage = Usage
 	flag.Parse()
 	if err := new(hap.Git).Exists(); err != nil {
 		log.Fatal(err)
@@ -82,4 +84,16 @@ func display(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan 
 	}
 	logger.Printf("[%s] %s\n", host.Name, command.Log())
 	done <- true
+}
+
+func Usage() {
+	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+	flag.PrintDefaults()
+	fmt.Fprintln(os.Stderr, "\nAvailable Commands:")
+	w := new(tabwriter.Writer)
+	w.Init(os.Stderr, 0, 8, 0, '\t', 0)
+	for _, command := range cli.Commands {
+		fmt.Fprintln(w, command.Help())
+	}
+	w.Flush()
 }

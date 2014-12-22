@@ -31,12 +31,10 @@ func (cmd *BuildCmd) Log() string {
 
 // Get help on the build command
 func (cmd *BuildCmd) Help() string {
-	return fmt.Sprintf("%s\n%s",
-		"hap <build.json> : Run the scripts provided by the json formatted build list.",
-	)
+	return "hap <build.json>\t\t\tRun the scripts provided by the json build list."
 }
 
-// Run the build command on the remote server
+// Run the build command on the remote host
 func (cmd *BuildCmd) Run(remote *hap.Remote) error {
 	if cmd.build == "" {
 		return fmt.Errorf("%s", cmd.Help())

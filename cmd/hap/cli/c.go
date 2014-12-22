@@ -32,10 +32,10 @@ func (cmd *ArbitraryCmd) Log() string {
 
 // Get help on c (arbitrary) command
 func (cmd *ArbitraryCmd) Help() string {
-	return "Run an arbitrary command on the remote."
+	return "hap c <excutable>\t\t\tRun an arbitrary command on the remote host."
 }
 
-// Run an arbitrary command on the remote server
+// Run an arbitrary command on the remote host
 func (cmd *ArbitraryCmd) Run(remote *hap.Remote) error {
 	args := flag.Args()
 	if len(args) <= 1 {

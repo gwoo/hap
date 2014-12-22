@@ -33,10 +33,10 @@ func (cmd *ExecCmd) Log() string {
 
 // Get help on the exec command
 func (cmd *ExecCmd) Help() string {
-	return "Execute a script on the remote host."
+	return "hap exec <script>\t\t\tExecute a script on the remote host."
 }
 
-// Execute a script from the repo on the remote server
+// Execute a script from the repo on the remote host
 func (cmd *ExecCmd) Run(remote *hap.Remote) error {
 	args := flag.Args()
 	if len(args) <= 1 {

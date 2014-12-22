@@ -11,7 +11,8 @@ import (
 // The Hapfile
 type Hapfile struct {
 	Default Default
-	Hosts   map[string]*Host `gcfg:"host"`
+	Hosts   map[string]*Host  `gcfg:"host"`
+	Builds  map[string]*Build `gcfg:"build"`
 }
 
 // Get a host based on the name
@@ -21,16 +22,19 @@ func (h Hapfile) Host(name string) *Host {
 	if host, ok := h.Hosts[name]; ok {
 		host.Name = name
 		host.SetDefaults(h.Default)
+		host.BuildCmds(h.Builds)
 		return host
 	}
 	if h.Default.Addr != "" {
 		host := Host(h.Default)
 		host.Name = "default"
+		host.BuildCmds(h.Builds)
 		return &host
 	}
 	for name, host := range h.Hosts {
 		host.Name = name
 		host.SetDefaults(h.Default)
+		host.BuildCmds(h.Builds)
 		return host
 	}
 	return nil
@@ -55,19 +59,48 @@ type Host struct {
 	Username string
 	Identity string
 	Password string
+	Build    []string
+	Cmd      []string
+	cmds     []string
 }
 
 // Use the defaults to fill in missing host specific config
-func (s *Host) SetDefaults(d Default) {
-	if s.Username == "" {
-		s.Username = d.Username
+func (h *Host) SetDefaults(d Default) {
+	if h.Username == "" {
+		h.Username = d.Username
 	}
-	if s.Identity == "" {
-		s.Identity = d.Identity
+	if h.Identity == "" {
+		h.Identity = d.Identity
 	}
-	if s.Password == "" {
-		s.Password = d.Password
+	if h.Password == "" {
+		h.Password = d.Password
 	}
+	if len(h.Build) < 1 {
+		h.Build = d.Build
+	}
+	if len(h.Cmd) < 1 {
+		h.Cmd = d.Cmd
+	}
+}
+
+// Combine the builds and cmds
+func (h *Host) BuildCmds(builds map[string]*Build) {
+	h.cmds = []string{}
+	for _, build := range h.Build {
+		if b, ok := builds[build]; ok {
+			h.cmds = append(h.cmds, b.Cmd...)
+		}
+	}
+	h.cmds = append(h.cmds, h.Cmd...)
+}
+
+// Get the cmds to build
+func (h *Host) Cmds() []string {
+	return h.cmds
+}
+
+type Build struct {
+	Cmd []string
 }
 
 // Construct a new hapfile config

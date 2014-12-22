@@ -51,6 +51,6 @@ func (cmd *ExecCmd) Run(remote *hap.Remote) error {
 	ex := strings.Join(args[1:], " ")
 	result, err := remote.Execute([]string{"cd " + remote.Dir, "./" + ex})
 	cmd.result = result
-	cmd.log = fmt.Sprintf("Executed `%s` on %s.", args[1], remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Executed `%s` on %s.", args[1], remote.Host.Addr)
 	return err
 }

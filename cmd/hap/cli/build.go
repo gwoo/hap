@@ -31,20 +31,17 @@ func (cmd *BuildCmd) Log() string {
 
 // Get help on the build command
 func (cmd *BuildCmd) Help() string {
-	return "hap <build.json>\t\t\tRun the scripts provided by the json build list."
+	return "hap build\t\t\tRun the builds and commands from the Hapfile."
 }
 
 // Run the build command on the remote host
 func (cmd *BuildCmd) Run(remote *hap.Remote) error {
-	if cmd.build == "" {
-		return fmt.Errorf("%s", cmd.Help())
-	}
-	result, err := remote.Build(cmd.build)
+	result, err := remote.Build()
 	cmd.result = result
 	if err != nil {
-		cmd.log = fmt.Sprintf("Build failed %s on %s.", cmd.build, remote.Config.Addr)
+		cmd.log = fmt.Sprintf("Build failed %s on %s.", cmd.build, remote.Host.Addr)
 		return err
 	}
-	cmd.log = fmt.Sprintf("Build %s on %s.", cmd.build, remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Build %s on %s.", cmd.build, remote.Host.Addr)
 	return nil
 }

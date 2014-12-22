@@ -32,7 +32,7 @@ func (cmd *ArbitraryCmd) Log() string {
 
 // Get help on c (arbitrary) command
 func (cmd *ArbitraryCmd) Help() string {
-	return "hap c <excutable>\t\t\tRun an arbitrary command on the remote host."
+	return "hap c <command>\t\t\tRun an arbitrary command on the remote host."
 }
 
 // Run an arbitrary command on the remote host
@@ -44,6 +44,6 @@ func (cmd *ArbitraryCmd) Run(remote *hap.Remote) error {
 	arbitrary := strings.Join(args[1:], " ")
 	result, err := remote.Execute([]string{arbitrary})
 	cmd.result = result
-	cmd.log = fmt.Sprintf("Executed `%s` on %s.", arbitrary, remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Executed `%s` on %s.", arbitrary, remote.Host.Addr)
 	return err
 }

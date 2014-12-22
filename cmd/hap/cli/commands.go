@@ -3,8 +3,6 @@
 package cli
 
 import (
-	"strings"
-
 	"github.com/gwoo/hap"
 )
 
@@ -20,11 +18,6 @@ func (c commands) Add(name string, cmd Command) {
 
 // Get command from registered list
 func (c commands) Get(name string) Command {
-	if strings.Contains(name, ".js") {
-		command := Commands["build"].(*BuildCmd)
-		command.build = name
-		return command
-	}
 	if command, ok := Commands[name]; ok {
 		return command
 	}

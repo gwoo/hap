@@ -4,9 +4,7 @@ package hap
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,35 +19,35 @@ const happened string = "if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; the
 
 // The remote machine to provision
 type Remote struct {
-	Git     Git
-	Dir     string
-	Config  SshConfig
-	Host    *Host
-	session *ssh.Session
-	b       bytes.Buffer
-	mu      sync.Mutex
+	Git       Git
+	Dir       string
+	Host      *Host
+	sshConfig SshConfig
+	session   *ssh.Session
+	b         bytes.Buffer
+	mu        sync.Mutex
 }
 
 // Construct a new remote machine
 func NewRemote(host *Host) (*Remote, error) {
-	config := SshConfig{
+	sshConfig := SshConfig{
 		Addr:     host.Addr,
 		Username: host.Username,
 		Identity: host.Identity,
 		Password: host.Password,
 	}
-	cfg, err := NewClientConfig(config)
+	clientConfig, err := NewClientConfig(sshConfig)
 	if err != nil {
 		return nil, err
 	}
-	config.ClientConfig = cfg
+	sshConfig.ClientConfig = clientConfig
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 	dir := filepath.Base(cwd)
-	repo := fmt.Sprintf("ssh://%s@%s/~/%s", config.Username, config.Addr, dir)
-	r := &Remote{Git: Git{Repo: repo}, Dir: dir, Config: config, Host: host}
+	repo := fmt.Sprintf("ssh://%s@%s/~/%s", host.Username, host.Addr, dir)
+	r := &Remote{Git: Git{Repo: repo}, Dir: dir, sshConfig: sshConfig, Host: host}
 	return r, nil
 }
 
@@ -58,7 +56,7 @@ func (r *Remote) Connect() error {
 	if r.session != nil {
 		return nil
 	}
-	client, err := ssh.Dial("tcp", r.Config.Addr, r.Config.ClientConfig)
+	client, err := ssh.Dial("tcp", r.sshConfig.Addr, r.sshConfig.ClientConfig)
 	if err != nil {
 		return err
 	}
@@ -105,7 +103,7 @@ func (r *Remote) Push() ([]byte, error) {
 	if err := r.Connect(); err != nil {
 		return results, err
 	}
-	key, err := NewKeyFile(r.Config.Identity)
+	key, err := NewKeyFile(r.sshConfig.Identity)
 	if err != nil {
 		return results, err
 	}
@@ -122,29 +120,22 @@ func (r *Remote) Push() ([]byte, error) {
 	return r.Git.Push(strings.TrimSpace(string(branch)))
 }
 
-// Read a json file for a list of commands to execute.
-func (r *Remote) Build(list string) ([]byte, error) {
+// Execute the builds and cmds
+// First execute builds specified in Hapfile
+// Then execute any cmds specified in Hapfile
+func (r *Remote) Build() ([]byte, error) {
 	results, err := r.Push()
 	if err != nil {
 		return results, err
-	}
-	file, err := ioutil.ReadFile(list)
-	if err != nil {
-		return file, err
-	}
-	var data []string
-	err = json.Unmarshal(file, &data)
-	if err != nil {
-		return file, err
 	}
 	cmds := []string{
 		"cd " + r.Dir,
 		"touch .happended",
 		happened,
 	}
-	data = append(cmds, data...)
-	data = append(data, "echo `git rev-parse HEAD` > .happended")
-	return r.Execute(data)
+	cmds = append(cmds, r.Host.Cmds()...)
+	cmds = append(cmds, "echo `git rev-parse HEAD` > .happended")
+	return r.Execute(cmds)
 }
 
 // Shell out to the multiple commands or run one

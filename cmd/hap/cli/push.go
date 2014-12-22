@@ -39,12 +39,12 @@ func (cmd *PushCmd) Run(remote *hap.Remote) error {
 	result, err := remote.Push()
 	cmd.result = result
 	if err != nil {
-		cmd.log = fmt.Sprintf("Failed to push to %s.", remote.Config.Addr)
+		cmd.log = fmt.Sprintf("Failed to push to %s.", remote.Host.Addr)
 		return err
 	}
 	if len(cmd.result) <= 0 {
 		cmd.result = []byte(fmt.Sprintf("[%s] Push successful.\n", remote.Host.Name))
 	}
-	cmd.log = fmt.Sprintf("Pushed to %s.", remote.Config.Addr)
+	cmd.log = fmt.Sprintf("Pushed to %s.", remote.Host.Addr)
 	return nil
 }

@@ -1,7 +1,7 @@
 # Hap - A simple and effective provisioner.
 
 Hap uses Git to manage build scripts and run them on the remote server.
-Hap init will setup a remote host. Hap build will execute the commands specified in the Hapfile. To run arbitrary commands use hap c, and to execute individual scripts use hap exec.
+Hap init will setup a remote host. Hap build will execute the commands specified in the Hapfile. To run arbitrary commands use hap c, and to execute individual scripts use hap exec. After `hap build` a .happened file is saved with the current sha of remote repo. To build again a new commit is required. Make sure every build script is executable before being committed to the local repo.
 
 ## Basic Workflow
  - Create a local repository to hold builds scripts

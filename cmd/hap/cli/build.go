@@ -32,7 +32,7 @@ func (cmd *BuildCmd) Log() string {
 
 // Get help on the build command
 func (cmd *BuildCmd) Help() string {
-	return "hap build\t\t\tRun the builds and commands from the Hapfile."
+	return "hap build\tRun the builds and commands from the Hapfile."
 }
 
 // Run the build command on the remote host

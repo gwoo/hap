@@ -32,7 +32,7 @@ func (cmd *PushCmd) Log() string {
 
 // Get help on the push command
 func (cmd *PushCmd) Help() string {
-	return "hap push\t\t\tPush current repo to the remote."
+	return "hap push\tPush current repo to the remote."
 }
 
 // Push to the remote

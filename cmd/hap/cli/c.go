@@ -33,7 +33,7 @@ func (cmd *ArbitraryCmd) Log() string {
 
 // Get help on c (arbitrary) command
 func (cmd *ArbitraryCmd) Help() string {
-	return "hap c <command>\t\t\tRun an arbitrary command on the remote host."
+	return "hap c <command>\tRun an arbitrary command on the remote host."
 }
 
 // Run an arbitrary command on the remote host

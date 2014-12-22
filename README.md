@@ -3,6 +3,11 @@
 Hap uses Git to manage build scripts and run them on the remote server.
 Hap init will setup a remote host. Hap build will execute the commands specified in the Hapfile. To run arbitrary commands use hap c, and to execute individual scripts use hap exec.
 
+## Basic Workflow
+ - Create a local repository to hold builds scripts
+ - Add `Hapfile` to local repository
+ - Run `hap init` and `hap build`
+
 ## Hapfile
 The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax. Thre are 3 sections, `default`, `host`, `build`.
 The `default` section holds host config that will be applied to all hosts
@@ -38,11 +43,11 @@ Host one specifies two commands, notify.sh and cleanup.sh, to be run after the d
 	  -v=false: Verbose flag to print output
 
 	Available Commands:
-	hap build		Run the builds and commands from the Hapfile.
+	hap build			Run the builds and commands from the Hapfile.
 	hap c <command>		Run an arbitrary command on the remote host.
 	hap exec <script>	Execute a script on the remote host.
-	hap init		Initialize a new remote host.
-	hap push		Push current repo to the remote.
+	hap init			Initialize a new remote host.
+	hap push			Push current repo to the remote.
 
 ## License
 The BSD License http://opensource.org/licenses/bsd-license.php.

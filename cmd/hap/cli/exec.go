@@ -34,7 +34,7 @@ func (cmd *ExecCmd) Log() string {
 
 // Get help on the exec command
 func (cmd *ExecCmd) Help() string {
-	return "hap exec <script>\t\t\tExecute a script on the remote host."
+	return "hap exec <script>\tExecute a script on the remote host."
 }
 
 // Execute a script from the repo on the remote host

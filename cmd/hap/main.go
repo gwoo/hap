@@ -16,9 +16,9 @@ import (
 	"github.com/gwoo/hap/cmd/hap/cli"
 )
 
-var h = flag.String("h", "", "Individual host to use for commands.\n\t If empty, the default or a random host is used.")
-var v = flag.Bool("v", false, "Verbose flag to print output")
 var all = flag.Bool("all", false, "Use ALL the hosts.")
+var host = flag.String("host", "", "Individual host to use for commands.")
+var v = flag.Bool("v", false, "Verbose flag to print command log.")
 var logger VerboseLogger
 
 func main() {
@@ -62,7 +62,7 @@ func local(cmd string, command cli.Command) {
 }
 
 func remote(hf hap.Hapfile, cmd string, command cli.Command) {
-	hosts := hf.GetHosts(*h, *all)
+	hosts := hf.GetHosts(*host, *all)
 	if len(hosts) < 1 {
 		fmt.Printf("No host. Use -all or -host\n")
 		return
@@ -70,12 +70,12 @@ func remote(hf hap.Hapfile, cmd string, command cli.Command) {
 	done := make(chan bool, len(hosts))
 	cmdChan := make(chan cli.Command, len(hosts))
 	errChan := make(chan error, len(hosts))
-	for name, host := range hosts {
-		logger.Printf("[%s] Running `%s` on %s\n", name, cmd, host.Addr)
-		go run(hf.Host(name), command, cmdChan, errChan)
+	for name, h := range hosts {
+		logger.Printf("[%s] Running `%s` on %s\n", name, cmd, h.Addr)
+		go run(h, command, cmdChan, errChan)
 	}
-	for _, host := range hosts {
-		go display(host, cmd, cmdChan, errChan, done)
+	for _, h := range hosts {
+		go display(h, cmd, cmdChan, errChan, done)
 		<-done
 	}
 }

@@ -6,6 +6,7 @@ package hap
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 
 	"code.google.com/p/gcfg"
@@ -34,8 +35,9 @@ func (h Hapfile) GetHosts(name string, all bool) map[string]*Host {
 	sort.Strings(keys)
 	results := make(map[string]*Host)
 	for _, key := range keys {
-		results[key] = hosts[key]
+		results[key] = h.Host(key)
 	}
+	fmt.Printf("%#v", results)
 	return results
 }
 

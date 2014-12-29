@@ -5,6 +5,9 @@
 bin/hap: bin
 	go build -v -o $@ ./cmd/hap
 
+bin/hap-linux-amd64: bin
+	GOOS=linux GOARCH=amd64 go build -v -o $@ ./cmd/hap
+
 test:
 	go test -v ./...
 

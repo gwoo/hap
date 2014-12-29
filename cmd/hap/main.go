@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"text/tabwriter"
 
 	"github.com/gwoo/hap"
@@ -23,57 +24,70 @@ var logger VerboseLogger
 func main() {
 	flag.Usage = Usage
 	flag.Parse()
-	if err := new(hap.Git).Exists(); err != nil {
-		log.Fatal(err)
-	}
-	hf, err := hap.NewHapfile()
-	if err != nil {
-		log.Fatal(err)
-	}
 	if len(os.Args) <= 1 {
 		flag.Usage()
 		return
 	}
+	if err := new(hap.Git).Exists(); err != nil {
+		log.Fatal(err)
+	}
 	logger = VerboseLogger(*v)
 	if cmd := flag.Arg(0); cmd != "" {
-		hosts := hf.Hosts
-		if *all == false {
-			host := hf.Host(*h)
-			hosts = map[string]*hap.Host{host.Name: host}
+		command := cli.Commands.Get(cmd)
+		if command == nil {
+			log.Fatalf("Command `%s` not found.", cmd)
+			return
 		}
-		done := make(chan bool, len(hosts))
-		cmdChan := make(chan cli.Command, len(hosts))
-		errChan := make(chan error, len(hosts))
-		for name, host := range hosts {
-			host.Name = name
-			host.SetDefaults(hf.Default)
-			logger.Printf("[%s] Running `%s` on %s\n", host.Name, cmd, host.Addr)
-			go start(host, cmd, cmdChan, errChan)
+		if !command.IsRemote() {
+			local(cmd, command)
+			return
 		}
-		for _, host := range hosts {
-			go display(host, cmd, cmdChan, errChan, done)
-			<-done
+		hf, err := hap.NewHapfile()
+		if err != nil {
+			log.Fatal(err)
 		}
+		remote(hf, cmd, command)
 	}
 }
 
-func start(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan error) {
-	command, err := run(host, cmd)
+func local(cmd string, command cli.Command) {
+	err := command.Run(nil)
+	fmt.Print(command.String())
+	if err != nil {
+		fmt.Printf("[%s] %s\n", cmd, err)
+	}
+	if log := command.Log(); log != "" {
+		fmt.Printf("[%s] %s\n", cmd, log)
+	}
+}
+
+func remote(hf hap.Hapfile, cmd string, command cli.Command) {
+	hosts := hf.GetHosts(*h, *all)
+	if len(hosts) < 1 {
+		fmt.Printf("No host. Use -all or -host\n")
+		return
+	}
+	done := make(chan bool, len(hosts))
+	cmdChan := make(chan cli.Command, len(hosts))
+	errChan := make(chan error, len(hosts))
+	for name, host := range hosts {
+		logger.Printf("[%s] Running `%s` on %s\n", name, cmd, host.Addr)
+		go run(hf.Host(name), command, cmdChan, errChan)
+	}
+	for _, host := range hosts {
+		go display(host, cmd, cmdChan, errChan, done)
+		<-done
+	}
+}
+
+func run(host *hap.Host, command cli.Command, cmdChan chan cli.Command, errChan chan error) {
+	remote, err := hap.NewRemote(host)
+	if err == nil {
+		defer remote.Close()
+		err = command.Run(remote)
+	}
 	cmdChan <- command
 	errChan <- err
-}
-
-func run(host *hap.Host, cmd string) (cli.Command, error) {
-	remote, err := hap.NewRemote(host)
-	defer remote.Close()
-	if err != nil {
-		return nil, err
-	}
-	if command := cli.Commands.Get(cmd); command != nil {
-		err := command.Run(remote)
-		return command, err
-	}
-	return nil, fmt.Errorf("Command `%s` not found.", cmd)
 }
 
 func display(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan error, done chan bool) {
@@ -82,7 +96,7 @@ func display(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan 
 	err := <-errChan
 	fmt.Print(command.String())
 	if err != nil {
-		logger.Printf("[%s] %s\n", host.Name, err)
+		fmt.Printf("[%s] %s\n", host.Name, err)
 	}
 	logger.Printf("[%s] %s\n", host.Name, command.Log())
 	done <- true
@@ -94,8 +108,13 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "\nAvailable Commands:")
 	w := new(tabwriter.Writer)
 	w.Init(os.Stderr, 0, 8, 0, '\t', 0)
-	for _, command := range cli.Commands {
-		fmt.Fprintln(w, command.Help())
+	keys := []string{}
+	for key, _ := range cli.Commands {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, name := range keys {
+		fmt.Fprintln(w, cli.Commands.Get(name).Help())
 	}
 	w.Flush()
 }

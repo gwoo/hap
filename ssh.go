@@ -5,6 +5,7 @@
 package hap
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -36,16 +37,13 @@ func NewClientConfig(config SshConfig) (*ssh.ClientConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := NewKey(config.Identity)
-	if err != nil {
-		return nil, err
+	if config.Identity != "" {
+		signer, err := NewSigner(config.Identity)
+		if err != nil {
+			return nil, err
+		}
+		signers = append(signers, signer)
 	}
-	pk, err := ssh.NewSignerFromKey(key)
-	if err != nil {
-		return nil, err
-	}
-	signers = append(signers, pk)
-
 	auths := []ssh.AuthMethod{
 		ssh.PublicKeys(signers...),
 		ssh.Password(config.Password),
@@ -60,7 +58,7 @@ func NewKeyFile(key string) (string, error) {
 	if string(key[0]) == "~" {
 		u, err := user.Current()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("[identity] %s", err)
 		}
 		key = strings.Replace(key, "~", u.HomeDir, 1)
 	}
@@ -78,4 +76,13 @@ func NewKey(key string) (interface{}, error) {
 		return nil, err
 	}
 	return ssh.ParseRawPrivateKey(b)
+}
+
+// Create a new signer
+func NewSigner(key string) (ssh.Signer, error) {
+	pk, err := NewKey(key)
+	if err != nil {
+		return nil, err
+	}
+	return ssh.NewSignerFromKey(pk)
 }

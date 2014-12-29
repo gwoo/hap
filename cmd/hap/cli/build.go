@@ -21,6 +21,11 @@ type BuildCmd struct {
 	build  string
 }
 
+// Does this command expect a remote
+func (cmd *BuildCmd) IsRemote() bool {
+	return true
+}
+
 // Return the result of the command
 func (cmd *BuildCmd) String() string {
 	return string(cmd.result)

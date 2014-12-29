@@ -21,6 +21,11 @@ type PushCmd struct {
 	log    string
 }
 
+// Does this command expect a remote
+func (cmd *PushCmd) IsRemote() bool {
+	return true
+}
+
 // Return the result of the command
 func (cmd *PushCmd) String() string {
 	return string(cmd.result)

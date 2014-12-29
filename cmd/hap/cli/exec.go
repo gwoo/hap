@@ -23,6 +23,11 @@ type ExecCmd struct {
 	log    string
 }
 
+// Does this command expect a remote
+func (cmd *ExecCmd) IsRemote() bool {
+	return true
+}
+
 // Return the result of the command
 func (cmd *ExecCmd) String() string {
 	return string(cmd.result)
@@ -42,7 +47,7 @@ func (cmd *ExecCmd) Help() string {
 func (cmd *ExecCmd) Run(remote *hap.Remote) error {
 	args := flag.Args()
 	if len(args) <= 1 {
-		return fmt.Errorf("%s", cmd.Help())
+		return fmt.Errorf("error: expects <script>")
 	}
 	push := Commands.Get("push")
 	if err := push.Run(remote); err != nil {

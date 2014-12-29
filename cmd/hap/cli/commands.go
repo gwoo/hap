@@ -28,6 +28,7 @@ func (c commands) Get(name string) Command {
 
 // Command interface
 type Command interface {
+	IsRemote() bool
 	Help() string
 	Run(*hap.Remote) error
 	String() string

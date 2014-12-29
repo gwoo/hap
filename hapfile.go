@@ -6,6 +6,7 @@ package hap
 
 import (
 	"encoding/json"
+	"sort"
 
 	"code.google.com/p/gcfg"
 )
@@ -15,6 +16,27 @@ type Hapfile struct {
 	Default Default
 	Hosts   map[string]*Host  `gcfg:"host"`
 	Builds  map[string]*Build `gcfg:"build"`
+}
+
+// Get list of hosts
+func (h Hapfile) GetHosts(name string, all bool) map[string]*Host {
+	if all == false {
+		if host := h.Host(name); host != nil {
+			return map[string]*Host{name: host}
+		}
+		return nil
+	}
+	hosts := h.Hosts
+	keys := []string{}
+	for key, _ := range hosts {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	results := make(map[string]*Host)
+	for _, key := range keys {
+		results[key] = hosts[key]
+	}
+	return results
 }
 
 // Get a host based on the name
@@ -32,12 +54,6 @@ func (h Hapfile) Host(name string) *Host {
 		host.Name = "default"
 		host.BuildCmds(h.Builds)
 		return &host
-	}
-	for name, host := range h.Hosts {
-		host.Name = name
-		host.SetDefaults(h.Default)
-		host.BuildCmds(h.Builds)
-		return host
 	}
 	return nil
 }

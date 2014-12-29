@@ -22,6 +22,11 @@ type ArbitraryCmd struct {
 	log    string
 }
 
+// Does this command expect a remote
+func (cmd *ArbitraryCmd) IsRemote() bool {
+	return true
+}
+
 // Return the result of the command
 func (cmd *ArbitraryCmd) String() string {
 	return string(cmd.result)
@@ -41,7 +46,7 @@ func (cmd *ArbitraryCmd) Help() string {
 func (cmd *ArbitraryCmd) Run(remote *hap.Remote) error {
 	args := flag.Args()
 	if len(args) <= 1 {
-		return fmt.Errorf("%s", cmd.Help())
+		return fmt.Errorf("error: expects <command>")
 	}
 	arbitrary := strings.Join(args[1:], " ")
 	result, err := remote.Execute([]string{arbitrary})

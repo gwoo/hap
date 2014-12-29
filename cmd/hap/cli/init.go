@@ -21,6 +21,11 @@ type InitCmd struct {
 	log    string
 }
 
+// Does this command expect a remote
+func (cmd *InitCmd) IsRemote() bool {
+	return true
+}
+
 // Return the result of the command
 func (cmd *InitCmd) String() string {
 	return string(cmd.result)

@@ -41,17 +41,16 @@ Host one specifies two commands, notify.sh and cleanup.sh, to be run after the d
 ## Usage
 	Usage of hap:
 	  -all=false: Use ALL the hosts.
-	  -h="": Individual host to use for commands.
-		 If empty, the default or a random host is used.
-	  -v=false: Verbose flag to print output
+	  -host="": Individual host to use for commands.
+	  -v=false: Verbose flag to print command log.
 
 	Available Commands:
-	hap build			Run the builds and commands from the Hapfile.
+	hap build		Run the builds and commands from the Hapfile.
 	hap c <command>		Run an arbitrary command on the remote host.
 	hap create <name>	Create a new Hapfile at <name>.
 	hap exec <script>	Execute a script on the remote host.
-	hap init			Initialize a new remote host.
-	hap push			Push current repo to the remote.
+	hap init		Initialize a new remote host.
+	hap push		Push current repo to the remote.
 
 ## License
 The BSD License http://opensource.org/licenses/bsd-license.php.

@@ -1,7 +1,12 @@
 # Hap - A simple and effective provisioner.
 
-Hap uses Git to manage build scripts and run them on the remote server.
-Hap init will setup a remote host. Hap build will execute the commands specified in the Hapfile. To run arbitrary commands use hap c, and to execute individual scripts use hap exec. After `hap build` a .happened file is saved with the current sha of remote repo. To build again a new commit is required. Make sure every build script is executable before being committed to the local repo.
+Hap helps manage build scripts with git and run them concurrently on multiple remote hosts using composable blocks.
+
+First, `hap create` to setup a new local repo. Then add hosts to the generated Hapfile.Once hosts are in place, `hap init` will setup the remote hosts. Finally, `hap build` will execute the build blocks and commands specified in the Hapfile for each host. After `hap build` a .happened file is saved with the current sha of remote repo. To run `hap build` again a new commit is required.
+
+Tun arbitrary commands use `hap c`, and to execute individual scripts with `hap exec`.
+
+Make sure every build script is executable before committing to the local repo.
 
 ## Basic Workflow
  - Run `hap create <name>`
@@ -9,20 +14,20 @@ Hap init will setup a remote host. Hap build will execute the commands specified
  - Run `hap init` and `hap build`
 
 ## Environment Variables
-Hap exports `HAP_HOSTNAME`, `HAP_USER`, `HAP_ADDR` for use in your scripts.
+Hap exports `HAP_HOSTNAME`, `HAP_USER`, `HAP_ADDR` for use in scripts.
 
 ## Hapfile
-The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax. Thre are 3 sections, `default`, `host`, `build`.
-The `default` section holds host config that will be applied to all hosts
-The `host` section holds a named host config. A host config includes `addr`, `username`, `password`, `identity`, `build`, and `cmd`. Only `addr` is required. The `identity` should point to an ssh private key. Multiple `build` and `cmd` can be used.
-The `build` section holds cmds that could be applied to hosts
+The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax. There are 3 sections, `default`, `host`, and `build`.
+The `default` section holds host config that will be applied to all hosts.
+The `host` section holds a named host config. A host config includes `addr`, `username`, `password`, `identity`, `build`, and `cmd`. Only `addr` is required. The `identity` should point to a local ssh private key that has access to the host via the authorized_keys. The `build` section holds mulitple cmds that could be applied to a host. Multiple `build` and `cmd` are permitted for each host.
 
 ## Example Hapfile
-This example does not specify a `username`, `password` or `identity` so the details as specified in ~/.ssh/config are used to connect to hosts.
 A default build is specified, so update.sh and build.sh are executed for each host.
 Host one specifies two commands, notify.sh and cleanup.sh, to be run after the default build commands.
 
 	[default]
+	username = "root"
+	identity = "~/.ssh/id_rsa"
 	build = "default" ; applied to all hosts
 
 	[host "one"]

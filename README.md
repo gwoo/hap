@@ -8,6 +8,15 @@ Tun arbitrary commands use `hap c`, and to execute individual scripts with `hap 
 
 Make sure every build script is executable before committing to the local repo.
 
+## Installation
+#### via Go
+	go get github.com/gwoo/hap/cmd/hap
+#### for darwin/amd64
+	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.0/hap-darwin-amd64; chmod a+x hap-darwin-amd64
+#### for linux/amd64
+	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.0/hap-linux-amd64; chmod a+x hap-linux-amd64
+
+
 ## Basic Workflow
  - Run `hap create <name>`
  - Modify `Hapfile`

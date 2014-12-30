@@ -6,6 +6,8 @@ First, `hap create` to setup a new local repo. Then add hosts to the generated H
 
 Tun arbitrary commands use `hap c`, and to execute individual scripts with `hap exec`.
 
+If you only have one host, just use the `default` section. Then the `-all` or `-host` flag while running `hap` is not necessary.
+
 Make sure every build script is executable before committing to the local repo.
 
 ## Installation
@@ -59,12 +61,12 @@ Host one specifies two commands, notify.sh and cleanup.sh, to be run after the d
 	  -v=false: Verbose flag to print command log.
 
 	Available Commands:
-	hap build		Run the builds and commands from the Hapfile.
+	hap build			Run the builds and commands from the Hapfile.
 	hap c <command>		Run an arbitrary command on the remote host.
 	hap create <name>	Create a new Hapfile at <name>.
 	hap exec <script>	Execute a script on the remote host.
-	hap init		Initialize a new remote host.
-	hap push		Push current repo to the remote.
+	hap init			Initialize a new remote host.
+	hap push			Push current repo to the remote.
 
 ## License
 The BSD License http://opensource.org/licenses/bsd-license.php.

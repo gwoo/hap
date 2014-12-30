@@ -57,4 +57,5 @@ read oldrev newrev ref
 branch=${ref#refs/heads/}
 git reset --hard
 git checkout ${branch}
+git submodule update --init
 EOF`

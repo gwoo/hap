@@ -43,8 +43,14 @@ func (cmd *PushCmd) Help() string {
 
 // Push to the remote
 func (cmd *PushCmd) Run(remote *hap.Remote) error {
-	result, err := remote.Push()
+	result, err := remote.PushSubmodules()
 	cmd.result = result
+	if err != nil {
+		cmd.log = fmt.Sprintf("Failed to push to %s.", remote.Host.Addr)
+		return err
+	}
+	result, err = remote.Push()
+	cmd.result = append(cmd.result, result...)
 	if err != nil {
 		cmd.log = fmt.Sprintf("Failed to push to %s.", remote.Host.Addr)
 		return err

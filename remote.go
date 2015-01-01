@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"code.google.com/p/gcfg"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -115,11 +116,52 @@ func (r *Remote) Push() ([]byte, error) {
 		return results, err
 	}
 	cmd = exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = r.Git.Work
 	branch, err := cmd.CombinedOutput()
 	if err != nil {
 		return results, err
 	}
 	return r.Git.Push(strings.TrimSpace(string(branch)))
+}
+
+// Initialize and Push submodules into proper location on remote
+func (r *Remote) PushSubmodules() ([]byte, error) {
+	results := []byte{}
+	var modules struct {
+		Submodules map[string]*struct {
+			Path string
+			Url  string
+		} `gcfg:"submodule"`
+	}
+	err := gcfg.ReadFileInto(&modules, ".gitmodules")
+	if err != nil {
+		return results, err
+	}
+	errors := []string{}
+	for _, module := range modules.Submodules {
+		sr := &Remote{
+			Dir:       filepath.Join(r.Dir, module.Path),
+			sshConfig: r.sshConfig,
+			Host:      r.Host,
+			Git: Git{
+				Repo: fmt.Sprint(r.Git.Repo, "/", module.Path),
+				Work: module.Path,
+			},
+		}
+		_, err := sr.Initialize()
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("[%s] %s", module.Path, err.Error()))
+		}
+		r, err := sr.Push()
+		results = append(results, r...)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("[%s] %s", module.Path, err.Error()))
+		}
+	}
+	if len(errors) > 0 {
+		return results, fmt.Errorf("%s", strings.Join(errors, "\n"))
+	}
+	return results, nil
 }
 
 // Execute the builds and cmds

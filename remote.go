@@ -117,11 +117,15 @@ func (r *Remote) Push() ([]byte, error) {
 	}
 	cmd = exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = r.Git.Work
-	branch, err := cmd.CombinedOutput()
+	b, err := cmd.CombinedOutput()
 	if err != nil {
 		return results, err
 	}
-	return r.Git.Push(strings.TrimSpace(string(branch)))
+	branch := strings.TrimSpace(string(b))
+	if branch == "HEAD" {
+		branch = fmt.Sprintf("%s:refs/heads/happened", branch)
+	}
+	return r.Git.Push(branch)
 }
 
 // Initialize and Push submodules into proper location on remote

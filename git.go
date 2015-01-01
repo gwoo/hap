@@ -55,6 +55,6 @@ test "${PWD%/.git}" != "$PWD" && cd ..
 unset GIT_DIR GIT_WORK_TREE
 read oldrev newrev ref
 branch=${ref#refs/heads/}
-git reset --hard
-git checkout ${branch}
+git reset -q --hard
+git checkout -q ${branch}
 EOF`

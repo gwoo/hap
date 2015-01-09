@@ -20,6 +20,7 @@ var all = flag.Bool("all", false, "Use ALL the hosts.")
 var host = flag.String("host", "", "Individual host to use for commands.")
 var v = flag.Bool("v", false, "Verbose flag to print command log.")
 var logger VerboseLogger
+var Version string
 
 func main() {
 	flag.Usage = Usage
@@ -64,7 +65,7 @@ func local(cmd string, command cli.Command) {
 func remote(hf hap.Hapfile, cmd string, command cli.Command) {
 	hosts := hf.GetHosts(*host, *all)
 	if len(hosts) < 1 {
-		fmt.Printf("No host. Use -all or -host\n")
+		fmt.Printf("Missing flag -all or -host\n")
 		return
 	}
 	done := make(chan bool, len(hosts))
@@ -103,6 +104,7 @@ func display(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan 
 }
 
 func Usage() {
+	fmt.Printf("Version: %s\n", Version)
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr, "\nAvailable Commands:")

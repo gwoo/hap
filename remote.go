@@ -172,10 +172,6 @@ func (r *Remote) PushSubmodules() ([]byte, error) {
 // First execute builds specified in Hapfile
 // Then execute any cmds specified in Hapfile
 func (r *Remote) Build() ([]byte, error) {
-	results, err := r.Push()
-	if err != nil {
-		return results, err
-	}
 	cmds := []string{
 		"cd " + r.Dir,
 		"touch .happended",

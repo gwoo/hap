@@ -43,6 +43,12 @@ func (cmd *BuildCmd) Help() string {
 
 // Run the build command on the remote host
 func (cmd *BuildCmd) Run(remote *hap.Remote) error {
+	push := Commands.Get("push")
+	if err := push.Run(remote); err != nil {
+		cmd.log = push.Log()
+		cmd.result = []byte(push.String())
+		return err
+	}
 	result, err := remote.Build()
 	cmd.result = result
 	if err != nil {

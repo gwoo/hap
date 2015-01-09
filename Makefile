@@ -1,5 +1,5 @@
 # Hap - the simple and effective provisioner
-# Copyright (c) 2014 Garrett Woodworth (https://github.com/gwoo)
+# Copyright (c) 2015 Garrett Woodworth (https://github.com/gwoo)
 .PHONY: bin/hap test
 
 bin/hap: bin

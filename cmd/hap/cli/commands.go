@@ -30,7 +30,5 @@ func (c commands) Get(name string) Command {
 type Command interface {
 	IsRemote() bool
 	Help() string
-	Run(*hap.Remote) error
-	String() string
-	Log() string
+	Run(*hap.Remote) (string, error)
 }

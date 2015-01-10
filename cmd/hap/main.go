@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/gwoo/hap"
@@ -40,67 +41,44 @@ func main() {
 			return
 		}
 		if !command.IsRemote() {
-			local(cmd, command)
+			run(nil, command)
 			return
 		}
 		hf, err := hap.NewHapfile()
 		if err != nil {
 			log.Fatal(err)
 		}
-		remote(hf, cmd, command)
+		hosts := hf.GetHosts(*host, *all)
+		if len(hosts) < 1 {
+			fmt.Printf("Missing flag -all or -host\n")
+			return
+		}
+		var wg sync.WaitGroup
+		for _, h := range hosts {
+			wg.Add(1)
+			go func(h *hap.Host) {
+				defer wg.Done()
+				run(h, command)
+			}(h)
+		}
+		wg.Wait()
 	}
 }
 
-func local(cmd string, command cli.Command) {
-	err := command.Run(nil)
-	fmt.Print(command.String())
-	if err != nil {
-		fmt.Printf("[%s] %s\n", cmd, err)
-	}
-	if log := command.Log(); log != "" {
-		fmt.Printf("[%s] %s\n", cmd, log)
-	}
-}
-
-func remote(hf hap.Hapfile, cmd string, command cli.Command) {
-	hosts := hf.GetHosts(*host, *all)
-	if len(hosts) < 1 {
-		fmt.Printf("Missing flag -all or -host\n")
-		return
-	}
-	done := make(chan bool, len(hosts))
-	cmdChan := make(chan cli.Command, len(hosts))
-	errChan := make(chan error, len(hosts))
-	for name, h := range hosts {
-		logger.Printf("[%s] Running `%s` on %s\n", name, cmd, h.Addr)
-		go run(h, command, cmdChan, errChan)
-	}
-	for _, h := range hosts {
-		go display(h, cmd, cmdChan, errChan, done)
-		<-done
-	}
-}
-
-func run(host *hap.Host, command cli.Command, cmdChan chan cli.Command, errChan chan error) {
-	remote, err := hap.NewRemote(host)
-	if err == nil {
+func run(host *hap.Host, command cli.Command) {
+	var remote *hap.Remote
+	var err error
+	if host != nil {
+		remote, err = hap.NewRemote(host)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		defer remote.Close()
-		err = command.Run(remote)
 	}
-	cmdChan <- command
-	errChan <- err
-}
-
-func display(host *hap.Host, cmd string, cmdChan chan cli.Command, errChan chan error, done chan bool) {
-	logger.Printf("[%s] Results of `%s` on %s\n", host.Name, cmd, host.Addr)
-	command := <-cmdChan
-	err := <-errChan
-	fmt.Print(command.String())
-	if err != nil {
-		fmt.Printf("[%s] %s\n", host.Name, err)
-	}
-	logger.Printf("[%s] %s\n", host.Name, command.Log())
-	done <- true
+	result, err := command.Run(remote)
+	logger.Println(err)
+	fmt.Println(result)
 }
 
 func Usage() {

@@ -40,7 +40,7 @@ The `default` section holds host config that will be applied to all hosts.
 The `host` section holds a named host config. A host config includes `addr`, `username`, `password`, `identity`, `build`, and `cmd`. Only `addr` is required. The `identity` should point to a local ssh private key that has access to the host via the authorized_keys. The `build` section holds mulitple cmds that could be applied to a host. Multiple `build` and `cmd` are permitted for each host.
 
 ## Example Hapfile
-A default build is specified, so update.sh and build.sh are executed for each host.
+A default build is specified, so init.sh and update.sh are executed for each host.
 Host one specifies two commands, notify.sh and cleanup.sh, to be run after the default build commands.
 
 	[default]
@@ -57,8 +57,8 @@ Host one specifies two commands, notify.sh and cleanup.sh, to be run after the d
 	addr = "10.0.20.11:22"
 
 	[build "default"]
+	cmd = ./init.sh
 	cmd = ./update.sh
-	cmd = ./default.sh
 
 
 ## Usage

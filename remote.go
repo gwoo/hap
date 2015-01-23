@@ -26,14 +26,14 @@ type Remote struct {
 	Git       Git
 	Dir       string
 	Host      *Host
-	sshConfig SshConfig
+	sshConfig SSHConfig
 	session   *ssh.Session
 	writer    io.Writer
 }
 
 // NewRemote constructs a new remote machine
 func NewRemote(host *Host) (*Remote, error) {
-	sshConfig := SshConfig{
+	sshConfig := SSHConfig{
 		Addr:     host.Addr,
 		Username: host.Username,
 		Identity: host.Identity,

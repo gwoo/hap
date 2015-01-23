@@ -13,12 +13,12 @@ var Commands = make(commands)
 
 type commands map[string]Command
 
-// Add command to list
+// Add takes a name and a command and adds it to the list
 func (c commands) Add(name string, cmd Command) {
 	c[name] = cmd
 }
 
-// Get command from registered list
+// Get takes a name and returns the associated command
 func (c commands) Get(name string) Command {
 	if command, ok := Commands[name]; ok {
 		return command

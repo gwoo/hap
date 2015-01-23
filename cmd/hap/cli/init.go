@@ -15,20 +15,20 @@ func init() {
 	Commands.Add("init", &InitCmd{})
 }
 
-// Init command for setting up remote repo
+// InitCmd struct for setting up remote repo
 type InitCmd struct{}
 
-// Does this command expect a remote
+// IsRemote returns whether the command expects a remote or not
 func (cmd *InitCmd) IsRemote() bool {
 	return true
 }
 
-// Get help on the init command
+// Help returns help on the hap init command
 func (cmd *InitCmd) Help() string {
 	return "hap init\tInitialize a new remote host."
 }
 
-// Run the command against the remote
+// Run takes a remote and runs a command on it
 func (cmd *InitCmd) Run(remote *hap.Remote) (string, error) {
 	if err := remote.Initialize(); err != nil {
 		result := fmt.Sprintf("[%s] init %s failed.", remote.Host.Name, remote.Dir)

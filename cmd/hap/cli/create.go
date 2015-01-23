@@ -19,15 +19,15 @@ func init() {
 	Commands.Add("create", &CreateCmd{})
 }
 
-// Init command for setting up remote repo
+// CreateCmd inits the command for setting up remote repo
 type CreateCmd struct{}
 
-// Does this command expect a remote
+// IsRemote returns whether the command expects a remote or not
 func (cmd *CreateCmd) IsRemote() bool {
 	return false
 }
 
-// Get help on the create command
+// Help returns the help on hap create <name>
 func (cmd *CreateCmd) Help() string {
 	return "hap create <name>\tCreate a new Hapfile at <name>."
 }

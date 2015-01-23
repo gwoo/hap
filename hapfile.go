@@ -11,14 +11,14 @@ import (
 	"code.google.com/p/gcfg"
 )
 
-// The Hapfile
+// Hapfile defines the hosts, builds, and default
 type Hapfile struct {
 	Default Default
 	Hosts   map[string]*Host  `gcfg:"host"`
 	Builds  map[string]*Build `gcfg:"build"`
 }
 
-// Get list of hosts
+// GetHosts takes a name and returns the list of hosts
 func (h Hapfile) GetHosts(name string, all bool) map[string]*Host {
 	if all == false {
 		if host := h.Host(name); host != nil {
@@ -28,7 +28,7 @@ func (h Hapfile) GetHosts(name string, all bool) map[string]*Host {
 	}
 	hosts := h.Hosts
 	keys := []string{}
-	for key, _ := range hosts {
+	for key := range hosts {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
@@ -39,9 +39,9 @@ func (h Hapfile) GetHosts(name string, all bool) map[string]*Host {
 	return results
 }
 
-// Get a host based on the name
-// If the name is empty, and if default addr exists, return default
-// otherwise return a random host
+// Host takes a name and returns the host
+// If the name is empty and default addr exists return default.
+// If no default is set it returns a random host.
 func (h Hapfile) Host(name string) *Host {
 	if host, ok := h.Hosts[name]; ok {
 		host.Name = name
@@ -58,7 +58,7 @@ func (h Hapfile) Host(name string) *Host {
 	return nil
 }
 
-// Return the hapfile config as json
+// String returns the hapfile config as json
 func (h Hapfile) String() string {
 	b, err := json.Marshal(h)
 	if err != nil {
@@ -67,10 +67,10 @@ func (h Hapfile) String() string {
 	return string(b)
 }
 
-// The default settings
+// Default holds the default settings
 type Default Host
 
-// A remote machine
+// Host describes a remote machine
 type Host struct {
 	Name     string
 	Addr     string
@@ -82,7 +82,7 @@ type Host struct {
 	cmds     []string
 }
 
-// Use the defaults to fill in missing host specific config
+// SetDefaults fills in missing host specific configs with defaults
 func (h *Host) SetDefaults(d Default) {
 	if h.Username == "" {
 		h.Username = d.Username
@@ -101,7 +101,7 @@ func (h *Host) SetDefaults(d Default) {
 	}
 }
 
-// Combine the builds and cmds
+// BuildCmds combines the builds and cmds
 func (h *Host) BuildCmds(builds map[string]*Build) {
 	h.cmds = []string{}
 	for _, build := range h.Build {
@@ -112,16 +112,17 @@ func (h *Host) BuildCmds(builds map[string]*Build) {
 	h.cmds = append(h.cmds, h.Cmd...)
 }
 
-// Get the cmds to build
+// Cmds returns the cmds to build
 func (h *Host) Cmds() []string {
 	return h.cmds
 }
 
+// Build holds the cmds
 type Build struct {
 	Cmd []string
 }
 
-// Construct a new hapfile config
+// NewHapfile constructs a new hapfile config
 func NewHapfile() (Hapfile, error) {
 	var hf Hapfile
 	err := gcfg.ReadFileInto(&hf, "Hapfile")

@@ -21,6 +21,8 @@ var all = flag.Bool("all", false, "Use ALL the hosts.")
 var host = flag.String("host", "", "Individual host to use for commands.")
 var v = flag.Bool("v", false, "Verbose flag to print command log.")
 var logger VerboseLogger
+
+// Version is just the version of hap
 var Version string
 
 func main() {
@@ -81,6 +83,7 @@ func run(host *hap.Host, command cli.Command) {
 	fmt.Println(result)
 }
 
+// Usage prints out the hap CLI usage
 func Usage() {
 	fmt.Printf("Version: %s\n", Version)
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
@@ -89,7 +92,7 @@ func Usage() {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stderr, 0, 8, 0, '\t', 0)
 	keys := []string{}
-	for key, _ := range cli.Commands {
+	for key := range cli.Commands {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)

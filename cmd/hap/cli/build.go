@@ -15,14 +15,15 @@ func init() {
 	Commands.Add("build", &BuildCmd{})
 }
 
+// BuildCmd is the build command
 type BuildCmd struct{}
 
-// Does this command expect a remote
+// IsRemote returns whether this command expects a remote
 func (cmd *BuildCmd) IsRemote() bool {
 	return true
 }
 
-// Get help on the build command
+// Help returns help for the build command
 func (cmd *BuildCmd) Help() string {
 	return "hap build\tRun the builds and commands from the Hapfile."
 }

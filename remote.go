@@ -21,19 +21,19 @@ import (
 // Formatted script that checks if the build happened.
 const happened string = "if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; then echo \"Already completed. Commit again?\"; exit 2; fi"
 
-// The remote machine to provision
+// Remote defines the remote machine to provision
 type Remote struct {
 	Git       Git
 	Dir       string
 	Host      *Host
-	sshConfig SshConfig
+	sshConfig SSHConfig
 	session   *ssh.Session
 	writer    io.Writer
 }
 
-// Construct a new remote machine
+// NewRemote constructs a new remote machine
 func NewRemote(host *Host) (*Remote, error) {
-	sshConfig := SshConfig{
+	sshConfig := SSHConfig{
 		Addr:     host.Addr,
 		Username: host.Username,
 		Identity: host.Identity,
@@ -59,7 +59,7 @@ func NewRemote(host *Host) (*Remote, error) {
 	return r, nil
 }
 
-// Start ssh session to remote machine.
+// Connect starts an ssh session to a remote machine
 func (r *Remote) Connect() error {
 	if r.session != nil {
 		return nil
@@ -76,7 +76,7 @@ func (r *Remote) Connect() error {
 	return nil
 }
 
-// End session with remote machine
+// Close ends an ssh session with a remote machine
 func (r *Remote) Close() error {
 	if r.session != nil {
 		err := r.session.Close()
@@ -86,7 +86,7 @@ func (r *Remote) Close() error {
 	return nil
 }
 
-// Setup a git repo on the remote machine
+// Initialize sets up a git repo on the remote machine
 func (r *Remote) Initialize() error {
 	if err := r.Connect(); err != nil {
 		return err
@@ -104,7 +104,7 @@ func (r *Remote) Initialize() error {
 	return r.Execute(commands)
 }
 
-// Update repo on the remote machine
+// Push updates the repo on the remote machine
 func (r *Remote) Push() error {
 	if err := r.Connect(); err != nil {
 		return err
@@ -134,12 +134,13 @@ func (r *Remote) Push() error {
 	return nil
 }
 
-// Initialize and Push submodules into proper location on remote
+// PushSubmodules runs Initialize() and Push() to put submodules
+// into the proper location on the remote machine
 func (r *Remote) PushSubmodules() error {
 	var modules struct {
 		Submodules map[string]*struct {
 			Path string
-			Url  string
+			URL  string
 		} `gcfg:"submodule"`
 	}
 	if err := gcfg.ReadFileInto(&modules, ".gitmodules"); err != nil {
@@ -169,9 +170,9 @@ func (r *Remote) PushSubmodules() error {
 	return nil
 }
 
-// Execute the builds and cmds
-// First execute builds specified in Hapfile
-// Then execute any cmds specified in Hapfile
+// Build executes the builds and cmds
+// It first executes the builds specified in the Hapfile
+// and then executes any cmds speficied in the Hapfile
 func (r *Remote) Build() error {
 	cmds := []string{
 		"cd " + r.Dir,
@@ -183,7 +184,7 @@ func (r *Remote) Build() error {
 	return r.Execute(cmds)
 }
 
-// Shell out to the multiple commands or run one
+// Execute will shell out to run one or more commands
 func (r *Remote) Execute(commands []string) error {
 	if err := r.Connect(); err != nil {
 		return err
@@ -201,7 +202,7 @@ func (r *Remote) Execute(commands []string) error {
 	return nil
 }
 
-// Return preset environment variables to pass to execute
+// Env returns the preset environment variables to pass to execute
 func (r *Remote) Env() string {
 	return fmt.Sprint(
 		"export HAP_HOSTNAME=\"", r.Host.Name, "\";",
@@ -210,18 +211,18 @@ func (r *Remote) Env() string {
 	)
 }
 
-// Writer with [host] prepended to output
+// NewRemoteWriter returns a Writer with [host] prepended to the output
 func NewRemoteWriter(host string, w io.Writer) io.Writer {
 	return &RemoteWriter{host: host, w: w}
 }
 
-// Writer with host and io.Writer
+// RemoteWriter is a Writer with host and io.Writer
 type RemoteWriter struct {
 	host string
 	w    io.Writer
 }
 
-// Implement io.Writer interface
+// Write implements the io.Writer interface
 func (hw *RemoteWriter) Write(p []byte) (int, error) {
 	var err error
 	l := len(p)

@@ -17,22 +17,23 @@ func init() {
 	Commands.Add("c", &ArbitraryCmd{})
 }
 
+// ArbitraryCmd is an arbitrary command
 type ArbitraryCmd struct {
 	result []byte
 	log    string
 }
 
-// Does this command expect a remote
+// IsRemote returns whether this command expects a remote
 func (cmd *ArbitraryCmd) IsRemote() bool {
 	return true
 }
 
-// Get help on c (arbitrary) command
+// Help returns help on hap c <command>"
 func (cmd *ArbitraryCmd) Help() string {
 	return "hap c <command>\tRun an arbitrary command on the remote host."
 }
 
-// Run an arbitrary command on the remote host
+// Run takes a remote and runs an arbitrary command on it
 func (cmd *ArbitraryCmd) Run(remote *hap.Remote) (string, error) {
 	args := flag.Args()
 	if len(args) <= 1 {

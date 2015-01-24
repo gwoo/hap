@@ -15,20 +15,20 @@ func init() {
 	Commands.Add("push", &PushCmd{})
 }
 
-// Push command
+// PushCmd is the push command
 type PushCmd struct{}
 
-// Does this command expect a remote
+// IsRemote returns whether the command expects a remote
 func (cmd *PushCmd) IsRemote() bool {
 	return true
 }
 
-// Get help on the push command
+// Help returns help on the hap push command
 func (cmd *PushCmd) Help() string {
 	return "hap push\tPush current repo to the remote."
 }
 
-// Push to the remote
+// Run takes a remote and pushes to it
 func (cmd *PushCmd) Run(remote *hap.Remote) (string, error) {
 	if err := remote.PushSubmodules(); err != nil {
 		result := fmt.Sprintf("[%s] push failed.", remote.Host.Name)

@@ -17,8 +17,8 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-// Config necessary for ssh connections
-type SshConfig struct {
+// SSHConfig holds the config for ssh connections
+type SSHConfig struct {
 	Addr         string
 	Username     string
 	Identity     string
@@ -26,8 +26,8 @@ type SshConfig struct {
 	ClientConfig *ssh.ClientConfig
 }
 
-// Construct a new client config
-func NewClientConfig(config SshConfig) (*ssh.ClientConfig, error) {
+// NewClientConfig constructs a new client config
+func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
 	sock, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func NewClientConfig(config SshConfig) (*ssh.ClientConfig, error) {
 	return cfg, nil
 }
 
-// Get the data in the key file
+// NewKeyFile takes a key and returns the key file
 func NewKeyFile(key string) (string, error) {
 	if string(key[0]) == "~" {
 		u, err := user.Current()
@@ -65,7 +65,7 @@ func NewKeyFile(key string) (string, error) {
 	return filepath.EvalSymlinks(key)
 }
 
-// Parse and return the interface for the key type (rsa, dss, etc)
+// NewKey parses and returns the interface for the key type (rsa, dss, etc)
 func NewKey(key string) (interface{}, error) {
 	file, err := NewKeyFile(key)
 	if err != nil {
@@ -78,7 +78,7 @@ func NewKey(key string) (interface{}, error) {
 	return ssh.ParseRawPrivateKey(b)
 }
 
-// Create a new signer
+// NewSigner creates a new ssh signer
 func NewSigner(key string) (ssh.Signer, error) {
 	pk, err := NewKey(key)
 	if err != nil {

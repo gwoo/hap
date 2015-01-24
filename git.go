@@ -15,7 +15,7 @@ type Git struct {
 	Work string
 }
 
-// Check whether the git executable exists
+// Exists checks whether the git executable exists
 func (g Git) Exists() error {
 	o, err := exec.LookPath("git")
 	if err != nil {
@@ -24,7 +24,8 @@ func (g Git) Exists() error {
 	return nil
 }
 
-// Add and Commit all files, including untracked to the repo
+// Commit takes a commit message. It adds and commits all
+// files, including untracked, to the repo
 func (g Git) Commit(message string) ([]byte, error) {
 	cmd := exec.Command("git", "add", ".")
 	cmd.Dir = g.Work
@@ -37,7 +38,7 @@ func (g Git) Commit(message string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-// Force push to the remote repo
+// Push takes a branch and force pushes it to the git remote
 func (g Git) Push(branch string) ([]byte, error) {
 	if branch == "" {
 		branch = "master"

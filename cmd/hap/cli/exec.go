@@ -17,20 +17,20 @@ func init() {
 	Commands.Add("exec", &ExecCmd{})
 }
 
-// Exec command
+// ExecCmd is the command
 type ExecCmd struct{}
 
-// Does this command expect a remote
+// IsRemote returns whether the command expects a remote or not
 func (cmd *ExecCmd) IsRemote() bool {
 	return true
 }
 
-// Get help on the exec command
+// Help returns help on hap exec <script>
 func (cmd *ExecCmd) Help() string {
 	return "hap exec <script>\tExecute a script on the remote host."
 }
 
-// Execute a script from the repo on the remote host
+// Run takes a remote and executes a script from the repo on it
 func (cmd *ExecCmd) Run(remote *hap.Remote) (string, error) {
 	args := flag.Args()
 	if len(args) <= 1 {

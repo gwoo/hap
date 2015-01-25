@@ -5,7 +5,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -15,11 +14,12 @@ import (
 
 	"github.com/gwoo/hap"
 	"github.com/gwoo/hap/cmd/hap/cli"
+	flag "github.com/ogier/pflag"
 )
 
-var all = flag.Bool("all", false, "Use ALL the hosts.")
-var host = flag.String("host", "", "Individual host to use for commands.")
-var v = flag.Bool("v", false, "Verbose flag to print command log.")
+var all = flag.BoolP("all", "a", false, "Use ALL the hosts.")
+var host = flag.StringP("host", "h", "", "Individual host to use for commands.")
+var v = flag.BoolP("verbose", "v", false, "Verbose flag to print command log.")
 var logger VerboseLogger
 
 // Version is just the version of hap

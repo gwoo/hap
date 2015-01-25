@@ -63,9 +63,9 @@ Host one specifies two commands, notify.sh and cleanup.sh, to be run after the d
 
 ## Usage
 	Usage of hap:
-	  -all=false: Use ALL the hosts.
-	  -host="": Individual host to use for commands.
-	  -v=false: Verbose flag to print command log.
+	  -a, --all=false: Use ALL the hosts.
+	  -h, --host="": Individual host to use for commands.
+	  -v, --verbose=false: Verbose flag to print command log.
 
 	Available Commands:
 	hap build			Run the builds and commands from the Hapfile.

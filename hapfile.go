@@ -6,6 +6,7 @@ package hap
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"sort"
 
 	"code.google.com/p/gcfg"
@@ -18,18 +19,14 @@ type Hapfile struct {
 	Builds  map[string]*Build `gcfg:"build"`
 }
 
-// GetHosts takes a name and returns the list of hosts
-func (h Hapfile) GetHosts(name string, all bool) map[string]*Host {
-	if all == false {
-		if host := h.Host(name); host != nil {
-			return map[string]*Host{name: host}
-		}
-		return nil
-	}
+// GetHosts finds a list of hosts matching name string
+func (h Hapfile) GetHosts(name string) map[string]*Host {
 	hosts := h.Hosts
 	keys := []string{}
-	for key := range hosts {
-		keys = append(keys, key)
+	for key, _ := range hosts {
+		if matched, _ := filepath.Match(name, key); matched == true {
+			keys = append(keys, key)
+		}
 	}
 	sort.Strings(keys)
 	results := make(map[string]*Host)
@@ -123,8 +120,8 @@ type Build struct {
 }
 
 // NewHapfile constructs a new hapfile config
-func NewHapfile() (Hapfile, error) {
+func NewHapfile(file string) (Hapfile, error) {
 	var hf Hapfile
-	err := gcfg.ReadFileInto(&hf, "Hapfile")
+	err := gcfg.ReadFileInto(&hf, file)
 	return hf, err
 }

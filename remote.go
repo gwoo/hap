@@ -196,7 +196,7 @@ func (r *Remote) Execute(commands []string) error {
 	defer r.Close()
 	r.session.Stdout = NewRemoteWriter(r.Host.Name, os.Stdout)
 	r.session.Stderr = NewRemoteWriter(r.Host.Name, os.Stderr)
-	cmd := fmt.Sprintf("%s%s", r.Env(), commands[0])
+	cmd := fmt.Sprint(r.Env(), commands[0])
 	if len(commands) > 1 {
 		cmd = fmt.Sprintf("sh -c '%s%s'", r.Env(), strings.Join(commands, "&&"))
 	}

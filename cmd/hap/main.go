@@ -19,7 +19,9 @@ import (
 
 var all = flag.BoolP("all", "a", false, "Use ALL the hosts.")
 var host = flag.StringP("host", "h", "", "Individual host to use for commands.")
-var v = flag.BoolP("verbose", "v", false, "Verbose flag to print command log.")
+var verbose = flag.BoolP("verbose", "v", false, "Verbose flag to print command log.")
+var hapfile = flag.StringP("file", "f", "Hapfile", "Location of a Hapfile.")
+
 var logger VerboseLogger
 
 // Version is just the version of hap
@@ -35,7 +37,7 @@ func main() {
 	if err := new(hap.Git).Exists(); err != nil {
 		log.Fatal(err)
 	}
-	logger = VerboseLogger(*v)
+	logger = VerboseLogger(*verbose)
 	if cmd := flag.Arg(0); cmd != "" {
 		command := cli.Commands.Get(cmd)
 		if command == nil {
@@ -46,14 +48,17 @@ func main() {
 			run(nil, command)
 			return
 		}
-		hf, err := hap.NewHapfile()
+		hf, err := hap.NewHapfile(*hapfile)
 		if err != nil {
 			log.Fatal(err)
 		}
-		hosts := hf.GetHosts(*host, *all)
-		if len(hosts) < 1 {
-			fmt.Printf("Missing flag -all or -host\n")
+		if *host == "" {
+			fmt.Println("Missing host flag: Please specify -h or --host=")
 			return
+		}
+		hosts := hf.GetHosts(*host)
+		if len(hosts) < 0 {
+			log.Fatalf("No hosts found for %s", *host)
 		}
 		var wg sync.WaitGroup
 		for _, h := range hosts {

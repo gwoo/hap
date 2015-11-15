@@ -5,7 +5,6 @@
 package hap
 
 import (
-	"fmt"
 	"os/exec"
 )
 
@@ -15,7 +14,7 @@ type Git struct {
 	Work string
 }
 
-// Exists checks whether the git executable exists
+// Check whether the git executable exists
 func (g Git) Exists() error {
 	o, err := exec.LookPath("git")
 	if err != nil {
@@ -24,8 +23,7 @@ func (g Git) Exists() error {
 	return nil
 }
 
-// Commit takes a commit message. It adds and commits all
-// files, including untracked, to the repo
+// Add and Commit all files, including untracked to the repo
 func (g Git) Commit(message string) ([]byte, error) {
 	cmd := exec.Command("git", "add", ".")
 	cmd.Dir = g.Work
@@ -38,7 +36,21 @@ func (g Git) Commit(message string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-// Push takes a branch and force pushes it to the git remote
+// Create a new branch
+func (g Git) Branch(name string) ([]byte, error) {
+	cmd := exec.Command("git", "branch", name)
+	cmd.Dir = g.Work
+	return cmd.CombinedOutput()
+}
+
+// Create a new branch
+func (g Git) Checkout(name string) ([]byte, error) {
+	cmd := exec.Command("git", "checkout", name)
+	cmd.Dir = g.Work
+	return cmd.CombinedOutput()
+}
+
+// Force push to the branch to the remote repo
 func (g Git) Push(branch string) ([]byte, error) {
 	if branch == "" {
 		branch = "master"

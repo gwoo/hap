@@ -8,7 +8,10 @@ import (
 	"fmt"
 
 	"github.com/gwoo/hap"
+	flag "github.com/ogier/pflag"
 )
+
+var force = flag.BoolP("force", "f", false, "Force build even if it happened before.")
 
 // Add the build command
 func init() {
@@ -33,7 +36,7 @@ func (cmd *BuildCmd) Run(remote *hap.Remote) (string, error) {
 	if result, err := Commands.Get("push").Run(remote); err != nil {
 		return result, err
 	}
-	if err := remote.Build(); err != nil {
+	if err := remote.Build(*force); err != nil {
 		result := fmt.Sprintf("[%s] build failed.", remote.Host.Name)
 		return result, err
 	}

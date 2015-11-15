@@ -178,14 +178,13 @@ func (r *Remote) PushSubmodules() error {
 	return nil
 }
 
-// Build executes the builds and cmds
-// It first executes the builds specified in the Hapfile
-// and then executes any cmds speficied in the Hapfile
-func (r *Remote) Build() error {
-	cmds := []string{
-		"cd " + r.Dir,
-		"touch .happended",
-		happened,
+// Execute the builds and cmds
+// First execute builds specified in Hapfile
+// Then execute any cmds specified in Hapfile
+func (r *Remote) Build(force bool) error {
+	cmds := []string{"cd " + r.Dir, "touch .happended"}
+	if !force {
+		cmds = append(cmds, happened)
 	}
 	cmds = append(cmds, r.Host.Cmds()...)
 	cmds = append(cmds, "echo `git rev-parse HEAD` > .happended")

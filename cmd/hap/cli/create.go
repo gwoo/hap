@@ -5,13 +5,13 @@
 package cli
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
 
 	"github.com/gwoo/hap"
+	flag "github.com/ogier/pflag"
 )
 
 // Add the create command

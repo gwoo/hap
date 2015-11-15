@@ -5,11 +5,11 @@
 package cli
 
 import (
-	"flag"
 	"fmt"
 	"strings"
 
 	"github.com/gwoo/hap"
+	flag "github.com/ogier/pflag"
 )
 
 // Add the exec command

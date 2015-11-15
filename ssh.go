@@ -26,23 +26,18 @@ type SSHConfig struct {
 	ClientConfig *ssh.ClientConfig
 }
 
-// NewClientConfig constructs a new client config
-func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
-	sock, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
-	if err != nil {
-		return nil, err
-	}
-	agent := agent.NewClient(sock)
-	signers, err := agent.Signers()
-	if err != nil {
-		return nil, err
+// Construct a new client config
+func NewClientConfig(config SshConfig) (*ssh.ClientConfig, error) {
+	signers := make([]ssh.Signer, 0)
+	if sock, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+		agent := agent.NewClient(sock)
+		agentsigners, _ := agent.Signers()
+		signers = append(signers, agentsigners...)
 	}
 	if config.Identity != "" {
-		signer, err := NewSigner(config.Identity)
-		if err != nil {
-			return nil, err
+		if signer, err := NewSigner(config.Identity); err == nil {
+			signers = append(signers, signer)
 		}
-		signers = append(signers, signer)
 	}
 	auths := []ssh.AuthMethod{
 		ssh.PublicKeys(signers...),

@@ -128,6 +128,9 @@ func (r *Remote) Push() error {
 	if branch == "HEAD" {
 		branch = fmt.Sprintf("%s:refs/heads/happened", branch)
 	}
+	if err := r.Initialize(); err != nil {
+		return fmt.Errorf("%s\n%s", err)
+	}
 	if output, err := r.Git.Push(branch); err != nil {
 		return fmt.Errorf("%s\n%s", string(output), err)
 	}
@@ -144,6 +147,11 @@ func (r *Remote) PushSubmodules() error {
 		} `gcfg:"submodule"`
 	}
 	if err := gcfg.ReadFileInto(&modules, ".gitmodules"); err != nil {
+		return err
+	}
+	cmd := exec.Command("git", "submodule", "update", "--init")
+	cmd.Dir = r.Git.Work
+	if _, err := cmd.CombinedOutput(); err != nil {
 		return err
 	}
 	errors := []string{}

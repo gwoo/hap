@@ -109,16 +109,13 @@ func (r *Remote) Push() error {
 	if err := r.Connect(); err != nil {
 		return err
 	}
-	key, err := NewKeyFile(r.sshConfig.Identity)
-	if err != nil {
-		return err
+	if key, err := NewKeyFile(r.sshConfig.Identity); err == nil {
+		cmd := exec.Command("ssh-add", key)
+		if _, err = cmd.CombinedOutput(); err != nil {
+			return err
+		}
 	}
-	cmd := exec.Command("ssh-add", key)
-	_, err = cmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-	cmd = exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = r.Git.Work
 	b, err := cmd.CombinedOutput()
 	if err != nil {

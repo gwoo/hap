@@ -3,7 +3,7 @@
 
 .PHONY: bin/hap bin/hap-linux-amd64 bin/hap-darwin-amd64 test
 VERSION := $(shell git describe --always --dirty --tags)
-VERSION_FLAGS := -ldflags "-X main.Version $(VERSION)"
+VERSION_FLAGS := -ldflags "-X main.Version=$(VERSION)"
 
 bin/hap: bin
 	go build -v $(VERSION_FLAGS) -o $@ ./cmd/hap

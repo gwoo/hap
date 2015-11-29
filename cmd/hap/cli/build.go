@@ -11,7 +11,7 @@ import (
 	flag "github.com/ogier/pflag"
 )
 
-var force = flag.BoolP("force", "f", false, "Force build even if it happened before.")
+var force = flag.BoolP("force", "", false, "Force build even if it happened before.")
 
 // Add the build command
 func init() {

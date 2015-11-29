@@ -19,17 +19,17 @@ Make sure every build script is executable before committing to the local repo.
 
 darwin/amd64
 
-	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.4/hap-darwin-amd64; chmod a+x hap-darwin-amd64
+	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.5/hap-darwin-amd64; chmod a+x hap-darwin-amd64
 
 linux/amd64
 
-	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.4/hap-linux-amd64; chmod a+x hap-linux-amd64
+	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.5/hap-linux-amd64; chmod a+x hap-linux-amd64
 
 
 ## Basic Workflow
  - Run `hap create <name>`
  - Modify `Hapfile`
- - Run `hap init` and `hap build`
+ - Run `hap -h <host> init` and `hap -h <host> build`
 
 ## Environment Variables
 Hap exports `HAP_HOSTNAME`, `HAP_USER`, `HAP_ADDR` for use in scripts.
@@ -60,20 +60,30 @@ Host one specifies two commands, notify.sh and cleanup.sh, to be run after the d
 	cmd = ./init.sh
 	cmd = ./update.sh
 
-
 ## Usage
-	Usage of hap:
+	Usage of ./bin/hap:
 	  -a, --all=false: Use ALL the hosts.
+	  -f, --file="Hapfile": Location of a Hapfile.
+	      --force=false: Force build even if it happened before.
 	  -h, --host="": Individual host to use for commands.
 	  -v, --verbose=false: Verbose flag to print command log.
 
 	Available Commands:
-	hap build			Run the builds and commands from the Hapfile.
+	hap build		Run the builds and commands from the Hapfile.
 	hap c <command>		Run an arbitrary command on the remote host.
 	hap create <name>	Create a new Hapfile at <name>.
 	hap exec <script>	Execute a script on the remote host.
-	hap init			Initialize a new remote host.
-	hap push			Push current repo to the remote.
+	hap init		Initialize a new remote host.
+	hap push		Push current repo to the remote.
+
+## Advanced Usage
+Sometimes you want to `init` or `build` more than one host. If the hosts follow a similar pattern
+you can reference all the hosts with a `*`. For example, `app-01` and `app-02` are configured.
+So, you can `init` both hosts with `hap -h app* init` and then build both with `hap -h app* build`
+
+Sometimes you have a lot of hosts that you want to manage in clusters. If you create multiple files
+you can use the `--file` flag to specify the location of the config. The file can be named anything.
+For example, `hap -f Appfile -h app* init`, will initialize all the app hosts in the Appfile.
 
 ## License
 The BSD License http://opensource.org/licenses/bsd-license.php.

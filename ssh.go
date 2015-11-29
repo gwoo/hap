@@ -27,7 +27,7 @@ type SSHConfig struct {
 }
 
 // Construct a new client config
-func NewClientConfig(config SshConfig) (*ssh.ClientConfig, error) {
+func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
 	signers := make([]ssh.Signer, 0)
 	if sock, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
 		agent := agent.NewClient(sock)

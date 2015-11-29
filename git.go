@@ -5,6 +5,7 @@
 package hap
 
 import (
+	"fmt"
 	"os/exec"
 )
 

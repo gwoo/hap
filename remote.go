@@ -144,7 +144,7 @@ func (r *Remote) PushSubmodules() error {
 		} `gcfg:"submodule"`
 	}
 	if err := gcfg.ReadFileInto(&modules, ".gitmodules"); err != nil {
-		return err
+		return nil
 	}
 	cmd := exec.Command("git", "submodule", "update", "--init")
 	cmd.Dir = r.Git.Work

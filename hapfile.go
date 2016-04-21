@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"code.google.com/p/gcfg"
+	"gopkg.in/gcfg.v1"
 )
 
 // Hapfile defines the hosts, builds, and default

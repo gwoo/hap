@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.google.com/p/gcfg"
 	"golang.org/x/crypto/ssh"
+	"gopkg.in/gcfg.v1"
 )
 
 // Formatted script that checks if the build happened.

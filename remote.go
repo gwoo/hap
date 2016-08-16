@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.google.com/p/gcfg"
+	"gopkg.in/gcfg.v1"
 	"golang.org/x/crypto/ssh"
 )
 

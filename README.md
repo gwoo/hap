@@ -4,7 +4,7 @@ Hap helps manage build scripts with git and run them concurrently on multiple re
 
 First, `hap create` to setup a new local repo. Then add hosts to the generated Hapfile.Once hosts are in place, `hap init` will setup the remote hosts. Finally, `hap build` will execute the build blocks and commands specified in the Hapfile for each host. After `hap build` a .happened file is saved with the current sha of remote repo. To run `hap build` again a new commit is required.
 
-Tun arbitrary commands use `hap c`, and to execute individual scripts with `hap exec`.
+To run arbitrary commands use `hap c`, and to execute individual scripts with `hap exec`.
 
 If you only have one host, just use the `default` section. Then the `-all` or `-host` flag while running `hap` is not necessary.
 

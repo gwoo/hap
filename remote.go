@@ -19,7 +19,7 @@ import (
 )
 
 // Formatted script that checks if the build happened.
-const happened string = "if [[ $(git rev-parse HEAD) = $(cat .happended) ]]; then echo \"Already completed. Commit again?\"; exit 2; fi"
+const happened string = "if [ \"$(git rev-parse HEAD)\" = \"$(cat .happended)\" ]; then echo \"Already completed. Commit again?\"; exit 2; fi"
 
 // Remote defines the remote machine to provision
 type Remote struct {

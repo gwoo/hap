@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/gcfg.v1"
 	"golang.org/x/crypto/ssh"
+	"gopkg.in/gcfg.v1"
 )
 
 // Formatted script that checks if the build happened.
@@ -111,22 +111,22 @@ func (r *Remote) Push() error {
 	}
 	if key, err := NewKeyFile(r.sshConfig.Identity); err == nil {
 		cmd := exec.Command("ssh-add", key)
-		if _, err = cmd.CombinedOutput(); err != nil {
-			return err
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("%s\n%s", string(output), err)
 		}
 	}
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = r.Git.Work
 	b, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("HEAD does not exist. Did you make a commit?")
 	}
 	branch := strings.TrimSpace(string(b))
 	if branch == "HEAD" {
 		branch = fmt.Sprintf("%s:refs/heads/happened", branch)
 	}
 	if err := r.Initialize(); err != nil {
-		return fmt.Errorf("%s\n%s", err)
+		return fmt.Errorf("%s\n", err)
 	}
 	if output, err := r.Git.Push(branch); err != nil {
 		return fmt.Errorf("%s\n%s", string(output), err)
@@ -148,8 +148,8 @@ func (r *Remote) PushSubmodules() error {
 	}
 	cmd := exec.Command("git", "submodule", "update", "--init")
 	cmd.Dir = r.Git.Work
-	if _, err := cmd.CombinedOutput(); err != nil {
-		return err
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("%s\n%s", string(output), err)
 	}
 	errors := []string{}
 	for _, module := range modules.Submodules {

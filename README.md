@@ -13,17 +13,17 @@ Make sure every build script is executable before committing to the local repo.
 ## Installation
 #### via Go
 
-	go get github.com/gwoo/hap/cmd/hap
+	go get -u github.com/gwoo/hap/cmd/hap
 
 #### Binaries
 
 darwin/amd64
 
-	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.5/hap-darwin-amd64; chmod a+x hap-darwin-amd64
+	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.6/hap-darwin-amd64; chmod a+x hap-darwin-amd64
 
 linux/amd64
 
-	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.5/hap-linux-amd64; chmod a+x hap-linux-amd64
+	curl -L -C - -O https://github.com/gwoo/hap/releases/download/v1.6/hap-linux-amd64; chmod a+x hap-linux-amd64
 
 
 ## Basic Workflow

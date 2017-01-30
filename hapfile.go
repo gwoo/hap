@@ -17,13 +17,53 @@ type Hapfile struct {
 	Default Default
 	Hosts   map[string]*Host  `gcfg:"host"`
 	Builds  map[string]*Build `gcfg:"build"`
+	Include Include           `gcfg:"include"`
+	Env     Env               `gcfg:"env"`
+}
+
+// NewHapfile constructs a new hapfile config
+func NewHapfile(file string) (Hapfile, error) {
+	hf, err := include(file)
+	if err != nil {
+		return hf, err
+	}
+	for _, file := range hf.Include.Path {
+		nhf, err := include(file)
+		if err != nil {
+			return hf, err
+		}
+		for n, h := range nhf.Hosts {
+			hf.Hosts[n] = h
+		}
+		for n, h := range nhf.Builds {
+			hf.Builds[n] = h
+		}
+		for _, file := range nhf.Env.File {
+			hf.Env.File = append(hf.Env.File, file)
+		}
+	}
+	for _, host := range hf.Hosts {
+		for _, file := range hf.Env.File {
+			host.Env = append(host.Env, file)
+		}
+		for i, j := 0, len(host.Env)-1; i < j; i, j = i+1, j-1 {
+			host.Env[i], host.Env[j] = host.Env[j], host.Env[i]
+		}
+	}
+	return hf, err
+}
+
+func include(file string) (Hapfile, error) {
+	var hf Hapfile
+	err := gcfg.ReadFileInto(&hf, file)
+	return hf, err
 }
 
 // GetHosts finds a list of hosts matching name string
 func (h Hapfile) GetHosts(name string) map[string]*Host {
 	hosts := h.Hosts
 	keys := []string{}
-	for key, _ := range hosts {
+	for key := range hosts {
 		if matched, _ := filepath.Match(name, key); matched == true {
 			keys = append(keys, key)
 		}
@@ -74,6 +114,7 @@ type Host struct {
 	Username string
 	Identity string
 	Password string
+	Env      []string
 	Build    []string
 	Cmd      []string
 	cmds     []string
@@ -119,9 +160,12 @@ type Build struct {
 	Cmd []string
 }
 
-// NewHapfile constructs a new hapfile config
-func NewHapfile(file string) (Hapfile, error) {
-	var hf Hapfile
-	err := gcfg.ReadFileInto(&hf, file)
-	return hf, err
+// Include holds the files to include
+type Include struct {
+	Path []string
+}
+
+// Env holds the files to source when running commands
+type Env struct {
+	File []string
 }

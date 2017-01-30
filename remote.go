@@ -9,8 +9,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -26,6 +26,7 @@ type Remote struct {
 	Git       Git
 	Dir       string
 	Host      *Host
+	env       []string
 	sshConfig SSHConfig
 	session   *ssh.Session
 	writer    io.Writer
@@ -52,7 +53,7 @@ func NewRemote(host *Host) (*Remote, error) {
 	repo := fmt.Sprintf("ssh://%s@%s/~/%s", host.Username, host.Addr, dir)
 	r := &Remote{
 		sshConfig: sshConfig,
-		Git:       Git{Repo: repo},
+		Git:       Git{Repo: repo, Key: sshConfig.Identity},
 		Dir:       dir,
 		Host:      host,
 	}
@@ -66,11 +67,11 @@ func (r *Remote) Connect() error {
 	}
 	client, err := ssh.Dial("tcp", r.sshConfig.Addr, r.sshConfig.ClientConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to dial: %s", err)
 	}
 	session, err := client.NewSession()
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to create session: %s", err)
 	}
 	r.session = session
 	return nil
@@ -91,6 +92,15 @@ func (r *Remote) Initialize() error {
 	if err := r.Connect(); err != nil {
 		return err
 	}
+	var b = "#!/bin/sh\n\nssh "
+	if r.sshConfig.Identity != "" {
+		b = b + " -i " + r.sshConfig.Identity
+	}
+	b = b + " -o ControlMaster=auto -o ControlPath=/tmp/%h_%p_%r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
+	err := ioutil.WriteFile(".git/hap-ssh", []byte(b), 0777)
+	if err != nil {
+		return fmt.Errorf("%s\n", err)
+	}
 	commands := []string{
 		fmt.Sprintf("GIT_DIR=\"%s\"", r.Dir),
 		fmt.Sprint("mkdir -p $GIT_DIR"),
@@ -109,17 +119,9 @@ func (r *Remote) Push() error {
 	if err := r.Connect(); err != nil {
 		return err
 	}
-	if key, err := NewKeyFile(r.sshConfig.Identity); err == nil {
-		cmd := exec.Command("ssh-add", key)
-		if output, err := cmd.CombinedOutput(); err != nil {
-			return fmt.Errorf("%s\n%s", string(output), err)
-		}
-	}
-	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
-	cmd.Dir = r.Git.Work
-	b, err := cmd.CombinedOutput()
+	b, err := r.Git.RevParse()
 	if err != nil {
-		return fmt.Errorf("HEAD does not exist. Did you make a commit?")
+		return fmt.Errorf("%s\n%s\n", string(b), err)
 	}
 	branch := strings.TrimSpace(string(b))
 	if branch == "HEAD" {
@@ -129,7 +131,7 @@ func (r *Remote) Push() error {
 		return fmt.Errorf("%s\n", err)
 	}
 	if output, err := r.Git.Push(branch); err != nil {
-		return fmt.Errorf("%s\n%s", string(output), err)
+		return fmt.Errorf("%s\n%s\n", string(output), err)
 	}
 	return nil
 }
@@ -146,10 +148,8 @@ func (r *Remote) PushSubmodules() error {
 	if err := gcfg.ReadFileInto(&modules, ".gitmodules"); err != nil {
 		return nil
 	}
-	cmd := exec.Command("git", "submodule", "update", "--init")
-	cmd.Dir = r.Git.Work
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("%s\n%s", string(output), err)
+	if output, err := r.Git.UpdateSubmodules(); err != nil {
+		return fmt.Errorf("%s\n%s\n", string(output), err)
 	}
 	errors := []string{}
 	for _, module := range modules.Submodules {
@@ -175,13 +175,16 @@ func (r *Remote) PushSubmodules() error {
 	return nil
 }
 
-// Execute the builds and cmds
+// Build executes the builds and cmds
 // First execute builds specified in Hapfile
 // Then execute any cmds specified in Hapfile
 func (r *Remote) Build(force bool) error {
 	cmds := []string{"cd " + r.Dir, "touch .happended"}
 	if !force {
 		cmds = append(cmds, happened)
+	}
+	for _, file := range r.Host.Env {
+		cmds = append(cmds, fmt.Sprint(". ./", file))
 	}
 	cmds = append(cmds, r.Host.Cmds()...)
 	cmds = append(cmds, "echo `git rev-parse HEAD` > .happended")

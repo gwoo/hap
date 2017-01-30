@@ -17,8 +17,7 @@ import (
 	flag "github.com/ogier/pflag"
 )
 
-var all = flag.BoolP("all", "a", false, "Use ALL the hosts.")
-var host = flag.StringP("host", "h", "", "Individual host to use for commands.")
+var host = flag.StringP("host", "h", "", "Host to use for commands. Use glob patterns to match multiple hosts. Use --host=* for all hosts.")
 var verbose = flag.BoolP("verbose", "v", false, "Verbose flag to print command log.")
 var hapfile = flag.StringP("file", "f", "Hapfile", "Location of a Hapfile.")
 
@@ -84,7 +83,9 @@ func run(host *hap.Host, command cli.Command) {
 		defer remote.Close()
 	}
 	result, err := command.Run(remote)
-	logger.Println(err)
+	if err != nil {
+		logger.Println(err)
+	}
 	fmt.Println(result)
 }
 

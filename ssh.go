@@ -26,24 +26,34 @@ type SSHConfig struct {
 	ClientConfig *ssh.ClientConfig
 }
 
-// Construct a new client config
+// NewClientConfig constructs a new *ssh.ClientConfig
 func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
-	signers := make([]ssh.Signer, 0)
+	methods := make([]ssh.AuthMethod, 0)
 	if sock, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-		agent := agent.NewClient(sock)
-		agentsigners, _ := agent.Signers()
-		signers = append(signers, agentsigners...)
+		method := ssh.PublicKeysCallback(agent.NewClient(sock).Signers)
+		methods = append(methods, method)
+	}
+	if config.Username == "" {
+		u, _ := user.Current()
+		config.Username = u.Name
 	}
 	if config.Identity != "" {
-		if signer, err := NewSigner(config.Identity); err == nil {
-			signers = append(signers, signer)
+		if method := NewPublicKeyMethod(config.Identity); method != nil {
+			methods = append(methods, method)
+		}
+	} else {
+		home := os.Getenv("HOME")
+		keys := []string{home + "/.ssh/id_rsa", home + "/.ssh/id_dsa"}
+		for _, key := range keys {
+			if method := NewPublicKeyMethod(key); method != nil {
+				methods = append(methods, method)
+			}
 		}
 	}
-	auths := []ssh.AuthMethod{
-		ssh.PublicKeys(signers...),
-		ssh.Password(config.Password),
+	if config.Password != "" {
+		methods = append(methods, ssh.Password(config.Password))
 	}
-	cfg := &ssh.ClientConfig{User: config.Username, Auth: auths}
+	cfg := &ssh.ClientConfig{User: config.Username, Auth: methods}
 	cfg.SetDefaults()
 	return cfg, nil
 }
@@ -61,7 +71,7 @@ func NewKeyFile(key string) (string, error) {
 }
 
 // NewKey parses and returns the interface for the key type (rsa, dss, etc)
-func NewKey(key string) (interface{}, error) {
+func NewKey(key string) (ssh.Signer, error) {
 	file, err := NewKeyFile(key)
 	if err != nil {
 		return nil, err
@@ -70,14 +80,14 @@ func NewKey(key string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ssh.ParseRawPrivateKey(b)
+	return ssh.ParsePrivateKey(b)
 }
 
-// NewSigner creates a new ssh signer
-func NewSigner(key string) (ssh.Signer, error) {
+// NewPublicKeyMethod creates a new auth method for public keys
+func NewPublicKeyMethod(key string) ssh.AuthMethod {
 	pk, err := NewKey(key)
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return ssh.NewSignerFromKey(pk)
+	return ssh.PublicKeys(pk)
 }

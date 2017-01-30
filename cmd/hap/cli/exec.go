@@ -40,7 +40,12 @@ func (cmd *ExecCmd) Run(remote *hap.Remote) (string, error) {
 		return result, err
 	}
 	ex := strings.Join(args[1:], " ")
-	if err := remote.Execute([]string{"cd " + remote.Dir, "./" + ex}); err != nil {
+	var cmds []string
+	for _, file := range remote.Host.Env {
+		cmds = append(cmds, fmt.Sprint(". ./", file))
+	}
+	cmds = append(cmds, "cd " + remote.Dir, "./" + ex)
+	if err := remote.Execute(cmds); err != nil {
 		result := fmt.Sprintf("[%s] `%s` failed.", remote.Host.Name, args[1])
 		return result, err
 	}

@@ -6,6 +6,7 @@ package hap
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -13,9 +14,10 @@ import (
 type Git struct {
 	Repo string
 	Work string
+	Key  string
 }
 
-// Check whether the git executable exists
+// Exists checks whether the git executable exists
 func (g Git) Exists() error {
 	o, err := exec.LookPath("git")
 	if err != nil {
@@ -24,7 +26,7 @@ func (g Git) Exists() error {
 	return nil
 }
 
-// Add and Commit all files, including untracked to the repo
+// Commit adds all files, including untracked to the repo
 func (g Git) Commit(message string) ([]byte, error) {
 	cmd := exec.Command("git", "add", ".")
 	cmd.Dir = g.Work
@@ -37,26 +39,42 @@ func (g Git) Commit(message string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-// Create a new branch
+// Branch creates a new branch
 func (g Git) Branch(name string) ([]byte, error) {
 	cmd := exec.Command("git", "branch", name)
 	cmd.Dir = g.Work
 	return cmd.CombinedOutput()
 }
 
-// Create a new branch
+// Checkout switches the branch
 func (g Git) Checkout(name string) ([]byte, error) {
 	cmd := exec.Command("git", "checkout", name)
 	cmd.Dir = g.Work
 	return cmd.CombinedOutput()
 }
 
-// Force push to the branch to the remote repo
+// Push forces push to the branch to the remote repo
 func (g Git) Push(branch string) ([]byte, error) {
 	if branch == "" {
 		branch = "master"
 	}
-	cmd := exec.Command("git", "push", "-f", "-q", g.Repo, branch)
+	cmd := exec.Command("git", "push", "-f", g.Repo, branch)
+	cmd.Dir = g.Work
+	env := os.Environ()
+	cmd.Env = append(env, "GIT_SSH=.git/hap-ssh")
+	return cmd.CombinedOutput()
+}
+
+// RevParse returns current revision of HEAD
+func (g Git) RevParse() ([]byte, error) {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = g.Work
+	return cmd.CombinedOutput()
+}
+
+// UpdateSubmodules updates and initializes submodules
+func (g Git) UpdateSubmodules() ([]byte, error) {
+	cmd := exec.Command("git", "submodule", "update", "--init")
 	cmd.Dir = g.Work
 	return cmd.CombinedOutput()
 }

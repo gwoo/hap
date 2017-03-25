@@ -65,9 +65,16 @@ func (r *Remote) Connect() error {
 	if r.session != nil {
 		return nil
 	}
-	client, err := ssh.Dial("tcp", r.sshConfig.Addr, r.sshConfig.ClientConfig)
-	if err != nil {
-		return fmt.Errorf("Failed to dial: %s", err)
+	var client *ssh.Client
+	var err error
+	for _ = range r.sshConfig.ClientConfig.Auth {
+		client, err = ssh.Dial("tcp", r.sshConfig.Addr, r.sshConfig.ClientConfig)
+		if err != nil {
+			if len(r.sshConfig.ClientConfig.Auth) == 1 {
+				return fmt.Errorf("Failed to dial: %s", err)
+			}
+			r.sshConfig.ClientConfig.Auth = r.sshConfig.ClientConfig.Auth[1:]
+		}
 	}
 	session, err := client.NewSession()
 	if err != nil {
@@ -97,7 +104,8 @@ func (r *Remote) Initialize() error {
 		b = b + " -i " + r.sshConfig.Identity
 	}
 	b = b + " -o ControlMaster=auto -o ControlPath=/tmp/%h_%p_%r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
-	err := ioutil.WriteFile(".git/hap-ssh", []byte(b), 0777)
+	p, _ := os.Getwd()
+	err := ioutil.WriteFile(filepath.Join(p, ".git", "hap-ssh"), []byte(b), 0777)
 	if err != nil {
 		return fmt.Errorf("%s\n", err)
 	}
@@ -161,9 +169,6 @@ func (r *Remote) PushSubmodules() error {
 				Repo: fmt.Sprint(r.Git.Repo, "/", module.Path),
 				Work: module.Path,
 			},
-		}
-		if err := sr.Initialize(); err != nil {
-			errors = append(errors, fmt.Sprintf("[%s] %s", module.Path, err))
 		}
 		if err := sr.Push(); err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] %s", module.Path, err))

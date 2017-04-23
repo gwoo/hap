@@ -192,9 +192,7 @@ func (r *Remote) Build(force bool) error {
 	if !force {
 		cmds = append(cmds, happened)
 	}
-	for _, file := range r.Host.Env {
-		cmds = append(cmds, fmt.Sprint(". ./", file))
-	}
+	cmds = r.Host.AddEnv(cmds)
 	cmds = append(cmds, r.Host.Cmds()...)
 	cmds = append(cmds, "echo `git rev-parse HEAD` > .happended")
 	return r.Execute(cmds)

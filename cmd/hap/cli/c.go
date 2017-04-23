@@ -40,7 +40,8 @@ func (cmd *ArbitraryCmd) Run(remote *hap.Remote) (string, error) {
 		return "", fmt.Errorf("error: expects <command>")
 	}
 	arbitrary := strings.Join(args[1:], " ")
-	if err := remote.Execute([]string{arbitrary}); err != nil {
+	cmds := []string{arbitrary}
+	if err := remote.Execute(cmds); err != nil {
 		result := fmt.Sprintf("[%s] `%s` failed.", remote.Host.Name, arbitrary)
 		return result, err
 	}

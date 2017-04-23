@@ -6,6 +6,7 @@ package hap
 
 import (
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"sort"
 
@@ -159,6 +160,14 @@ func (h *Host) BuildCmds(builds map[string]*Build) {
 // Cmds returns the cmds to build
 func (h *Host) Cmds() []string {
 	return h.cmds
+}
+
+// AddEnv includes env files in cmds
+func (h *Host) AddEnv(cmds []string) []string {
+	for _, file := range h.Env {
+		cmds = append(cmds, fmt.Sprint(". ./", file))
+	}
+	return cmds
 }
 
 // Build holds the cmds

@@ -12,6 +12,7 @@ import (
 )
 
 var force = flag.BoolP("force", "", false, "Force build even if it happened before.")
+var dry = flag.BoolP("dry", "", false, "Show commands without running them.")
 
 // Add the build command
 func init() {
@@ -33,6 +34,17 @@ func (cmd *BuildCmd) Help() string {
 
 // Run the build command on the remote host
 func (cmd *BuildCmd) Run(remote *hap.Remote) (string, error) {
+	if *dry {
+		result := fmt.Sprintf(
+			"[%s] --dry run.\n",
+			remote.Host.Name,
+		)
+		for _, cmd := range remote.Host.Cmds() {
+			result = result + fmt.Sprintf("[%s] %s\n", remote.Host.Name, cmd)
+		}
+		result = result + fmt.Sprintf("[%s] --dry run completed.\n", remote.Host.Name)
+		return result, nil
+	}
 	if result, err := Commands.Get("push").Run(remote); err != nil {
 		return result, err
 	}

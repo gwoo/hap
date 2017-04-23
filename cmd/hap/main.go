@@ -84,7 +84,7 @@ func run(host *hap.Host, command cli.Command) {
 	}
 	result, err := command.Run(remote)
 	if err != nil {
-		logger.Println(err)
+		fmt.Println(err)
 	}
 	fmt.Println(result)
 }

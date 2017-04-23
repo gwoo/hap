@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/gcfg.v1"
@@ -144,14 +145,11 @@ func (r *Remote) Push() error {
 	return nil
 }
 
-// PushSubmodules runs Initialize() and Push() to put submodules
+// PushSubmodules runs Push() to put submodules
 // into the proper location on the remote machine
 func (r *Remote) PushSubmodules() error {
 	var modules struct {
-		Submodules map[string]*struct {
-			Path string
-			URL  string
-		} `gcfg:"submodule"`
+		Submodules map[string]*submodule `gcfg:"submodule"`
 	}
 	if err := gcfg.ReadFileInto(&modules, ".gitmodules"); err != nil {
 		return nil
@@ -159,21 +157,27 @@ func (r *Remote) PushSubmodules() error {
 	if output, err := r.Git.UpdateSubmodules(); err != nil {
 		return fmt.Errorf("%s\n%s\n", string(output), err)
 	}
+	var wg sync.WaitGroup
 	errors := []string{}
 	for _, module := range modules.Submodules {
-		sr := &Remote{
-			sshConfig: r.sshConfig,
-			Dir:       filepath.Join(r.Dir, module.Path),
-			Host:      r.Host,
-			Git: Git{
-				Repo: fmt.Sprint(r.Git.Repo, "/", module.Path),
-				Work: module.Path,
-			},
-		}
-		if err := sr.Push(); err != nil {
-			errors = append(errors, fmt.Sprintf("[%s] %s", module.Path, err))
-		}
+		wg.Add(1)
+		go func(module *submodule) {
+			defer wg.Done()
+			sr := &Remote{
+				sshConfig: r.sshConfig,
+				Dir:       filepath.Join(r.Dir, module.Path),
+				Host:      r.Host,
+				Git: Git{
+					Repo: fmt.Sprint(r.Git.Repo, "/", module.Path),
+					Work: module.Path,
+				},
+			}
+			if err := sr.Push(); err != nil {
+				errors = append(errors, fmt.Sprintf("[%s] %s", module.Path, err))
+			}
+		}(module)
 	}
+	wg.Wait()
 	if len(errors) > 0 {
 		return fmt.Errorf("%s", strings.Join(errors, "\n"))
 	}
@@ -249,4 +253,9 @@ func (hw *RemoteWriter) Write(p []byte) (int, error) {
 		return l, err
 	}
 	return l, nil
+}
+
+type submodule struct {
+	Path string
+	URL  string
 }

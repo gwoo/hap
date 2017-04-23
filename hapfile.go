@@ -35,8 +35,8 @@ func NewHapfile(file string) (Hapfile, error) {
 		for n, h := range nhf.Hosts {
 			hf.Hosts[n] = h
 		}
-		for n, h := range nhf.Builds {
-			hf.Builds[n] = h
+		for n, b := range nhf.Builds {
+			hf.Builds[n] = b
 		}
 		for _, file := range nhf.Env.File {
 			hf.Env.File = append(hf.Env.File, file)
@@ -56,6 +56,12 @@ func NewHapfile(file string) (Hapfile, error) {
 func include(file string) (Hapfile, error) {
 	var hf Hapfile
 	err := gcfg.ReadFileInto(&hf, file)
+	if hf.Hosts == nil {
+		hf.Hosts = make(map[string]*Host, 0)
+	}
+	if hf.Builds == nil {
+		hf.Builds = make(map[string]*Build, 0)
+	}
 	return hf, err
 }
 

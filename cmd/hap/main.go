@@ -6,7 +6,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"sync"
@@ -18,8 +17,8 @@ import (
 )
 
 var host = flag.StringP("host", "h", "", "Host to use for commands. Use glob patterns to match multiple hosts. Use --host=* for all hosts.")
-var verbose = flag.BoolP("verbose", "v", false, "Verbose flag to print command log.")
 var hapfile = flag.StringP("file", "f", "Hapfile", "Location of a Hapfile.")
+var help = flag.BoolP("help", "", false, "Show help")
 
 var logger VerboseLogger
 
@@ -29,46 +28,49 @@ var Version string
 func main() {
 	flag.Usage = Usage
 	flag.Parse()
-	if len(os.Args) <= 1 {
+
+	if err := new(hap.Git).Exists(); err != nil {
+		fmt.Println(err)
+		os.Exit(2)
+	}
+	var command cli.Command
+	if cmd := flag.Arg(0); cmd != "" {
+		command = cli.Commands.Get(cmd)
+		if command == nil {
+			fmt.Printf("Command `%s` not found.\n", cmd)
+		}
+	}
+	if len(os.Args) <= 1 || *help || command == nil {
 		flag.Usage()
 		return
 	}
-	if err := new(hap.Git).Exists(); err != nil {
-		log.Fatal(err)
+	if !command.IsRemote() {
+		run(nil, command)
+		return
 	}
-	logger = VerboseLogger(*verbose)
-	if cmd := flag.Arg(0); cmd != "" {
-		command := cli.Commands.Get(cmd)
-		if command == nil {
-			log.Fatalf("Command `%s` not found.", cmd)
-			return
-		}
-		if !command.IsRemote() {
-			run(nil, command)
-			return
-		}
-		hf, err := hap.NewHapfile(*hapfile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if *host == "" {
-			fmt.Println("Missing host flag: Please specify -h or --host=")
-			return
-		}
-		hosts := hf.GetHosts(*host)
-		if len(hosts) < 0 {
-			log.Fatalf("No hosts found for %s", *host)
-		}
-		var wg sync.WaitGroup
-		for _, h := range hosts {
-			wg.Add(1)
-			go func(h *hap.Host) {
-				defer wg.Done()
-				run(h, command)
-			}(h)
-		}
-		wg.Wait()
+	hf, err := hap.NewHapfile(*hapfile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
 	}
+	if *host == "" {
+		fmt.Println("Missing host flag: Please specify -h or --host=")
+		os.Exit(2)
+	}
+	hosts := hf.GetHosts(*host)
+	if len(hosts) == 0 {
+		fmt.Printf("No hosts found for `%s`\n", *host)
+		return
+	}
+	var wg sync.WaitGroup
+	for _, h := range hosts {
+		wg.Add(1)
+		go func(h *hap.Host) {
+			defer wg.Done()
+			run(h, command)
+		}(h)
+	}
+	wg.Wait()
 }
 
 func run(host *hap.Host, command cli.Command) {

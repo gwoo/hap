@@ -78,6 +78,7 @@ Host `one` specifies two commands, notify.sh and cleanup.sh, to be run after the
 	[build "initialize"]
 	cmd = ./init.sh
 	cmd = ./update.sh
+	cmd = echo "initialized"
 
 ## Usage
 	Usage of ./bin/hap:
@@ -100,7 +101,7 @@ Then you can build both with `hap -h app-* build` or `hap -h a* build`.
 
 Sometimes you have a lot of hosts that you want to manage in clusters. If you create multiple files
 you can use the `--file` flag to specify the location of the config. The file can be named anything.
-For example, `hap -f Appfile -h app* init`, will initialize all the app hosts in the Appfile.
+For example, `hap -f Appfile -h app* push`, will push all the app hosts in the Appfile.
 
 ## License
 The BSD License http://opensource.org/licenses/bsd-license.php.

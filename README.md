@@ -2,9 +2,11 @@
 
 Hap helps manage build scripts with git and run them concurrently on multiple remote hosts using composable blocks.
 
-First, `hap create` to setup a new local repo. Then add hosts to the generated Hapfile. Once hosts are in place, run `hap build` to execute the build blocks and commands specified in the Hapfile for each host. After `hap build` a .happened file is saved with the current sha of remote repo. To run `hap build` again a new commit is required.
+First, `hap create` to setup a new local repo. Then add hosts to the generated Hapfile. Once hosts are in place, run `hap build` to execute the build blocks and commands specified in the Hapfile for each host. After `hap build` a .happened file is saved with the current sha of remote repo. To run `hap build` again a new commit is required or use the `--force` param.
 
 To run arbitrary commands use `hap c`, and to execute individual scripts with `hap exec`.
+`hap c` will not push the latest or run from the current directory or use the environment files, those must be added as part of the command.
+`hap exec` will push the latest, use the current directory and the environment.
 
 If you only have one host, just use the `default` section. Then the `-h,--host` flag while running `hap` is not necessary.
 
@@ -32,28 +34,28 @@ linux/amd64
  - Run `hap -h <host> build`
 
 ## Environment Variables
-Hap exports `HAP_HOSTNAME`, `HAP_USER`, `HAP_ADDR` for use in scripts.
+Hap exports `HAP_HOSTNAME`, `HAP_USER`, `HAP_ADDR` for use in scripts. You can add your own by using the `env` section or the `env` statement in the `host` section.
 
 ## Hapfile
-The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax. There are 5 sections, `default`, `host`, and `build`, `include`, and `env`. The `default` section holds host config that will be applied to all hosts. The `host` section holds a named host config. A host config includes `addr`, `username`, `password`, `identity`, `build`, and `cmd`, `env`. Only `addr` is required. The `identity` should point to a local ssh private key that has access to the host via the authorized_keys. The `build` section holds mulitple cmds that could be applied to a host. Multiple `build` and `cmd` are permitted for each host.
+The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax. There are 5 sections, `default`, `host`, `build`, `include`, and `env`. The `default` section holds host config that will be applied to all hosts. The `host` section holds a named host config. A host config includes `addr`, `username`, `password`, `identity`, `build`, and `cmd`, `env`. Only `addr` is required. The `identity` should point to a local ssh private key that has access to the host via the authorized_keys. The `build` section holds mulitple cmds that could be applied to a host. Multiple `build`, `cmd`, or `env` are permitted for each host. In addition, an `include` section accepts multiple `path` statements and an `env` section accepts multiple `file` statements.
 
 ### sections
- - host: Holds the configuration for a machine
-  - addr: the host:port of the remote machine
-  - username: the name of the user to login and run commands
-  - password: password for ssh password based authentication
-  - identity: path to ssh private key for key based authentication
-  - build: one or more groups of commands to run
-  - cmd: one or more commands to run on a specific host
-  - env: one or more environment files to apply to this host (can override env sections)
- - build: sets of commands to run
-  - cmd: one or more commands to run
- - default : Holds the standard configurations that can be applied to all hosts
+ - `host`: Holds the configuration for a machine
+  - `addr`: the host:port of the remote machine
+  - `username`: the name of the user to login and run commands
+  - `password`: password for ssh password based authentication
+  - `identity`: path to ssh private key for key based authentication
+  - `build`: one or more groups of commands to run
+  - `cmd`: one or more commands to run on a specific host
+  - `env`: one or more environment files to apply to this host (can override env sections)
+ - `build`: sets of commands to run
+  - `cmd`: one or more commands to run
+ - `default` : Holds the standard configurations that can be applied to all hosts
   - <same as host>
- - include: Allows other files to be included in the current configuration
-  - path: a path to the Hapfile the hap
- - env: make variables available to the all commands
-  - file: path to a file that can be sourced
+ - `include`: Allows other files to be included in the current configuration
+  - `path`: a path to the Hapfile the hap
+ - `env`: make variables available to the all commands
+  - `file`: path to a file that can be sourced
 
 
 ## Example Hapfile
@@ -89,7 +91,7 @@ Host `one` specifies two commands, notify.sh and cleanup.sh, to be run after the
 
 	Available Commands:
 	hap build		Run the builds and commands from the Hapfile.
-	hap c <command>		Run an arbitrary command on the remote host.
+	hap c <command>	Run an arbitrary command on the remote host.
 	hap create <name>	Create a new Hapfile at <name>.
 	hap exec <script>	Execute a script on the remote host.
 	hap push		Push current repo to the remote.

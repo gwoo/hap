@@ -1,5 +1,5 @@
 # Hap - the simple and effective provisioner
-# Copyright (c) 2015 Garrett Woodworth (https://github.com/gwoo)
+# Copyright (c) 2017 GWoo (https://github.com/gwoo)
 
 .PHONY: bin/hap bin/hap-linux-amd64 bin/hap-darwin-amd64 test
 VERSION := $(shell git describe --always --dirty --tags)

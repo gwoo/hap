@@ -1,5 +1,5 @@
 // Hap - the simple and effective provisioner
-// Copyright (c) 2015 Garrett Woodworth (https://github.com/gwoo)
+// Copyright (c) 2017 GWoo (https://github.com/gwoo)
 // The BSD License http://opensource.org/licenses/bsd-license.php.
 
 package hap

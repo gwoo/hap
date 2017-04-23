@@ -84,17 +84,18 @@ Host `one` specifies two commands, notify.sh and cleanup.sh, to be run after the
 
 ## Usage
 	Usage of ./bin/hap:
+	      --dry=false: Show commands without running them.
 	  -f, --file="Hapfile": Location of a Hapfile.
 	      --force=false: Force build even if it happened before.
-	  -h, --host="": Individual host to use for commands.
-	  -v, --verbose=false: Verbose flag to print command log.
+	      --help=false: Show help
+	  -h, --host="": Host to use for commands. Use glob patterns to match multiple hosts. Use --host=* for all hosts.
 
 	Available Commands:
-	hap build		Run the builds and commands from the Hapfile.
-	hap c <command>	Run an arbitrary command on the remote host.
-	hap create <name>	Create a new Hapfile at <name>.
-	hap exec <script>	Execute a script on the remote host.
-	hap push		Push current repo to the remote.
+	hap build          Run the builds and commands from the Hapfile.
+	hap c <command>    Run an arbitrary command on the remote host.
+	hap create <name>  Create a new Hapfile at <name>.
+	hap exec <script>  Execute a script on the remote host.
+	hap push           Push current repo to the remote.
 
 ## Advanced Usage
 Sometimes you want to `build` more than one host. If the hosts follow a similar pattern

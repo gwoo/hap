@@ -72,7 +72,8 @@ func (r *Remote) Connect() error {
 		client, err = ssh.Dial("tcp", r.sshConfig.Addr, r.sshConfig.ClientConfig)
 		if err != nil {
 			if len(r.sshConfig.ClientConfig.Auth) == 1 {
-				return fmt.Errorf("Failed to dial: %s", err)
+				return fmt.Errorf("Failed to connect with username=%s identity=%s password=%s",
+					r.sshConfig.Username, r.sshConfig.Identity, r.sshConfig.Password)
 			}
 			r.sshConfig.ClientConfig.Auth = r.sshConfig.ClientConfig.Auth[1:]
 		}
@@ -104,11 +105,10 @@ func (r *Remote) Initialize() error {
 	if r.sshConfig.Identity != "" {
 		b = b + " -i " + r.sshConfig.Identity
 	}
-	b = b + " -o ControlMaster=auto -o ControlPath=/tmp/%h_%p_%r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
-	p, _ := os.Getwd()
-	err := ioutil.WriteFile(filepath.Join(p, ".git", "hap-ssh"), []byte(b), 0777)
+	b = b + " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
+	err := ioutil.WriteFile("/tmp/hap-ssh-"+r.Host.Name, []byte(b), 0777)
 	if err != nil {
-		return fmt.Errorf("%s\n", err)
+		return fmt.Errorf("1 %s\n", err)
 	}
 	commands := []string{
 		fmt.Sprintf("GIT_DIR=\"%s\"", r.Dir),
@@ -139,6 +139,8 @@ func (r *Remote) Push() error {
 	if err := r.Initialize(); err != nil {
 		return fmt.Errorf("%s\n", err)
 	}
+	os.Setenv("GIT_SSH", "/tmp/hap-ssh-"+r.Host.Name)
+
 	if output, err := r.Git.Push(branch); err != nil {
 		return fmt.Errorf("%s\n%s\n", string(output), err)
 	}

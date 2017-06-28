@@ -54,9 +54,9 @@ func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
 		methods = append(methods, ssh.Password(config.Password))
 	}
 	cfg := &ssh.ClientConfig{
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		User:            config.Username,
 		Auth:            methods,
+		User:            config.Username,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 	cfg.SetDefaults()
 	return cfg, nil

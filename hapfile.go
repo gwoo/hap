@@ -34,10 +34,14 @@ func NewHapfile(file string) (Hapfile, error) {
 			return hf, err
 		}
 		for n, h := range nhf.Hosts {
-			hf.Hosts[n] = h
+			if _, ok := hf.Hosts[n]; !ok {
+				hf.Hosts[n] = h
+			}
 		}
 		for n, b := range nhf.Builds {
-			hf.Builds[n] = b
+			if _, ok := hf.Builds[n]; !ok {
+				hf.Builds[n] = b
+			}
 		}
 		for _, file := range nhf.Env.File {
 			hf.Env.File = append(hf.Env.File, file)

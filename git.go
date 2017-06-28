@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
 
 // Git struct
@@ -61,9 +60,7 @@ func (g Git) Push(branch string) ([]byte, error) {
 	}
 	cmd := exec.Command("git", "push", "-f", g.Repo, branch)
 	cmd.Dir = g.Work
-	env := os.Environ()
-	p, _ := os.Getwd()
-	cmd.Env = append(env, fmt.Sprint("GIT_SSH=", filepath.Join(p, ".git", "hap-ssh")))
+	cmd.Env = os.Environ()
 	return cmd.CombinedOutput()
 }
 

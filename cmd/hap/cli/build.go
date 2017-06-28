@@ -39,7 +39,10 @@ func (cmd *BuildCmd) Run(remote *hap.Remote) (string, error) {
 			"[%s] --dry run.\n",
 			remote.Host.Name,
 		)
-		for _, cmd := range remote.Host.Cmds() {
+		cmds := []string{"cd " + remote.Dir,}
+		cmds = remote.Host.AddEnv(cmds)
+		cmds = append(cmds, remote.Host.Cmds()...)
+		for _, cmd := range cmds {
 			result = result + fmt.Sprintf("[%s] %s\n", remote.Host.Name, cmd)
 		}
 		result = result + fmt.Sprintf("[%s] --dry run completed.\n", remote.Host.Name)

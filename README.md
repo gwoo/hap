@@ -41,21 +41,21 @@ The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax
 
 ### sections
  - `host`: Holds the configuration for a machine
-  - `addr`: the host:port of the remote machine
-  - `username`: the name of the user to login and run commands
-  - `password`: password for ssh password based authentication
-  - `identity`: path to ssh private key for key based authentication
-  - `build`: one or more groups of commands to run
-  - `cmd`: one or more commands to run on a specific host
-  - `env`: one or more environment files to apply to this host (can override env sections)
+   - `addr`: the host:port of the remote machine
+   - `username`: the name of the user to login and run commands
+   - `password`: password for ssh password based authentication
+   - `identity`: path to ssh private key for key based authentication
+   - `build`: one or more groups of commands to run
+   - `cmd`: one or more commands to run on a specific host
+   - `env`: one or more environment files to apply to this host (can override env sections)
  - `build`: sets of commands to run
-  - `cmd`: one or more commands to run
+   - `cmd`: one or more commands to run
  - `default` : Holds the standard configurations that can be applied to all hosts
-  - <same as host>
+   - <same as host>
  - `include`: Allows other files to be included in the current configuration
-  - `path`: a path to the Hapfile the hap
+   - `path`: a path to the Hapfile the hap
  - `env`: make variables available to the all commands
-  - `file`: path to a file that can be sourced
+   - `file`: path to a file that can be sourced
 
 
 ## Example Hapfile

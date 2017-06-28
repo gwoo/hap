@@ -42,7 +42,10 @@ The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax
 ### sections
  - `host`: Holds the configuration for a machine
    - `addr`: the host:port of the remote machine
+<<<<<<< HEAD
    - `dir`: base directory on the remote machine
+=======
+>>>>>>> Update README
    - `username`: the name of the user to login and run commands
    - `password`: password for ssh password based authentication
    - `identity`: path to ssh private key for key based authentication

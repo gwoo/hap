@@ -30,11 +30,11 @@ func (cmd *PushCmd) Help() string {
 
 // Run takes a remote and pushes to it
 func (cmd *PushCmd) Run(remote *hap.Remote) (string, error) {
-	if err := remote.PushSubmodules(); err != nil {
+	if err := remote.Push(); err != nil {
 		result := fmt.Sprintf("[%s] push failed.", remote.Host.Name)
 		return result, err
 	}
-	if err := remote.Push(); err != nil {
+	if err := remote.PushSubmodules(); err != nil {
 		result := fmt.Sprintf("[%s] push failed.", remote.Host.Name)
 		return result, err
 	}

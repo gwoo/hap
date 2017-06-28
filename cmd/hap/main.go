@@ -19,6 +19,7 @@ import (
 var host = flag.StringP("host", "h", "", "Host to use for commands. Use glob patterns to match multiple hosts. Use --host=* for all hosts.")
 var hapfile = flag.StringP("file", "f", "Hapfile", "Location of a Hapfile.")
 var help = flag.BoolP("help", "", false, "Show help")
+var verbose = flag.BoolP("verbose", "v", false, "[deprecated] Verbose mode is always on")
 
 var logger VerboseLogger
 

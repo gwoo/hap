@@ -18,11 +18,12 @@ import (
 
 // Hapfile defines the hosts, builds, and default
 type Hapfile struct {
-	Default Default
-	Hosts   map[string]*Host  `gcfg:"host"`
-	Builds  map[string]*Build `gcfg:"build"`
-	Include Include           `gcfg:"include"`
-	Env     Env               `gcfg:"env"`
+	Default  Default
+	Clusters map[string]*Cluster `gcfg:"cluster"`
+	Hosts    map[string]*Host    `gcfg:"host"`
+	Builds   map[string]*Build   `gcfg:"build"`
+	Include  Include             `gcfg:"include"`
+	Env      Env                 `gcfg:"env"`
 }
 
 // NewHapfile constructs a new hapfile config
@@ -36,6 +37,11 @@ func NewHapfile(file string) (Hapfile, error) {
 		if err != nil {
 			return hf, err
 		}
+		for n, c := range nhf.Clusters {
+			if _, ok := hf.Clusters[n]; !ok {
+				hf.Clusters[n] = c
+			}
+		}
 		for n, h := range nhf.Hosts {
 			if _, ok := hf.Hosts[n]; !ok {
 				hf.Hosts[n] = h
@@ -44,6 +50,15 @@ func NewHapfile(file string) (Hapfile, error) {
 		for n, b := range nhf.Builds {
 			if _, ok := hf.Builds[n]; !ok {
 				hf.Builds[n] = b
+			}
+		}
+		for _, c := range nhf.Clusters {
+			for _, n := range c.Host {
+				if _, ok := hf.Hosts[n]; ok {
+					hf.Hosts[n].Build = append(hf.Hosts[n].Build, c.Build...)
+					hf.Hosts[n].Cmd = append(hf.Hosts[n].Cmd, c.Cmd...)
+					hf.Hosts[n].Env = append(hf.Hosts[n].Env, c.Env...)
+				}
 			}
 		}
 		for _, file := range nhf.Env.File {
@@ -58,12 +73,24 @@ func NewHapfile(file string) (Hapfile, error) {
 			host.Env[i], host.Env[j] = host.Env[j], host.Env[i]
 		}
 	}
+	for _, c := range hf.Clusters {
+		for _, n := range c.Host {
+			if _, ok := hf.Hosts[n]; ok {
+				hf.Hosts[n].Build = append(hf.Hosts[n].Build, c.Build...)
+				hf.Hosts[n].Cmd = append(hf.Hosts[n].Cmd, c.Cmd...)
+				hf.Hosts[n].Env = append(hf.Hosts[n].Env, c.Env...)
+			}
+		}
+	}
 	return hf, err
 }
 
 func include(file string) (Hapfile, error) {
 	var hf Hapfile
 	err := gcfg.ReadFileInto(&hf, file)
+	if hf.Clusters == nil {
+		hf.Clusters = make(map[string]*Cluster, 0)
+	}
 	if hf.Hosts == nil {
 		hf.Hosts = make(map[string]*Host, 0)
 	}
@@ -116,6 +143,14 @@ func (h Hapfile) String() string {
 		return ""
 	}
 	return string(b)
+}
+
+// Cluster describes a group of remote machine
+type Cluster struct {
+	Host  []string
+	Build []string
+	Cmd   []string
+	Env   []string
 }
 
 // Default holds the default settings

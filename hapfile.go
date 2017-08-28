@@ -7,6 +7,9 @@ package hap
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"path"
 	"path/filepath"
 	"sort"
 
@@ -121,6 +124,7 @@ type Default Host
 // Host describes a remote machine
 type Host struct {
 	Name     string
+	Dir      string
 	Addr     string
 	Username string
 	Identity string
@@ -133,6 +137,9 @@ type Host struct {
 
 // SetDefaults fills in missing host specific configs with defaults
 func (h *Host) SetDefaults(d Default) {
+	if h.Dir == "" {
+		h.Dir = d.Dir
+	}
 	if h.Username == "" {
 		h.Username = d.Username
 	}
@@ -148,6 +155,17 @@ func (h *Host) SetDefaults(d Default) {
 	if len(h.Cmd) < 1 {
 		h.Cmd = d.Cmd
 	}
+}
+
+func (h *Host) GetDir() string {
+	if h.Dir != "" {
+		return h.Dir
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	return path.Base(cwd)
 }
 
 // BuildCmds combines the builds and cmds

@@ -267,3 +267,30 @@ cmd = "echo init"`
 		t.Error(err)
 	}
 }
+
+func TestCustomWorkingDir(t *testing.T) {
+	cfgStr := `; Comment line
+[default]
+dir = hap-working-directory
+
+[host "one"]
+addr = 10.0.0.1:22`
+	err := ioutil.WriteFile("TestHapfile", []byte(cfgStr), 0666)
+	if err != nil {
+		t.Error(err)
+	}
+	hf, err := NewHapfile("TestHapfile")
+	if err != nil {
+		t.Error(err)
+	}
+	host := hf.Host("one")
+	ws := host.GetDir()
+	gs := "hap-working-directory"
+	if ws != gs {
+		t.Error("Want:", ws, "Got:", gs)
+	}
+	err = os.Remove("TestHapfile")
+	if err != nil {
+		t.Error(err)
+	}
+}

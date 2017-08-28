@@ -46,11 +46,7 @@ func NewRemote(host *Host) (*Remote, error) {
 		return nil, err
 	}
 	sshConfig.ClientConfig = clientConfig
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	dir := filepath.Base(cwd)
+	dir := host.GetDir()
 	repo := fmt.Sprintf("ssh://%s@%s/~/%s", host.Username, host.Addr, dir)
 	r := &Remote{
 		sshConfig: sshConfig,

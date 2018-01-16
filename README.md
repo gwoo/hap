@@ -21,11 +21,11 @@ Make sure every build script is executable before committing to the local repo.
 
 darwin/amd64
 
-	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.1/hap-darwin-amd64; chmod a+x /usr/local/bin/hap
+	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.2/hap-darwin-amd64; chmod a+x /usr/local/bin/hap
 
 linux/amd64
 
-	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.1/hap-linux-amd64; chmod a+x /usr/local/bin/hap
+	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.2/hap-linux-amd64; chmod a+x /usr/local/bin/hap
 
 
 ## Basic Workflow

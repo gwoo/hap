@@ -5,8 +5,8 @@
 package hap
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"os/user"
@@ -38,14 +38,17 @@ func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
 		config.Username = u.Name
 	}
 	if config.Identity != "" {
-		if method := NewPublicKeyMethod(config.Identity); method != nil {
+		method, err := NewPublicKeyMethod(config.Identity)
+		if err == nil {
 			methods = append(methods, method)
+		} else {
+			log.Println("[identity]", err)
 		}
 	} else {
 		home := os.Getenv("HOME")
 		keys := []string{home + "/.ssh/id_rsa", home + "/.ssh/id_dsa"}
 		for _, key := range keys {
-			if method := NewPublicKeyMethod(key); method != nil {
+			if method, err := NewPublicKeyMethod(key); err == nil {
 				methods = append(methods, method)
 			}
 		}
@@ -65,11 +68,14 @@ func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
 // NewKeyFile takes a key and returns the key file
 func NewKeyFile(key string) (string, error) {
 	if string(key[0]) == "~" {
+		var homeDir string
 		u, err := user.Current()
 		if err != nil {
-			return "", fmt.Errorf("[identity] %s", err)
+			homeDir = os.Getenv("HOME")
+		} else {
+			homeDir = u.HomeDir
 		}
-		key = strings.Replace(key, "~", u.HomeDir, 1)
+		key = strings.Replace(key, "~", homeDir, 1)
 	}
 	return filepath.EvalSymlinks(key)
 }
@@ -88,10 +94,10 @@ func NewKey(key string) (ssh.Signer, error) {
 }
 
 // NewPublicKeyMethod creates a new auth method for public keys
-func NewPublicKeyMethod(key string) ssh.AuthMethod {
+func NewPublicKeyMethod(key string) (ssh.AuthMethod, error) {
 	pk, err := NewKey(key)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return ssh.PublicKeys(pk)
+	return ssh.PublicKeys(pk), nil
 }

@@ -21,11 +21,11 @@ Make sure every build script is executable before committing to the local repo.
 
 darwin/amd64
 
-	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.1/hap-darwin-amd64; chmod a+x /usr/local/bin/hap
+	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.3/hap-darwin-amd64; chmod a+x /usr/local/bin/hap
 
 linux/amd64
 
-	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.1/hap-linux-amd64; chmod a+x /usr/local/bin/hap
+	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.3/hap-linux-amd64; chmod a+x /usr/local/bin/hap
 
 
 ## Basic Workflow
@@ -42,6 +42,7 @@ The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax
 ### sections
  - `host`: Holds the configuration for a machine
    - `addr`: the host:port of the remote machine
+   - `dir`: base directory on the remote machine
    - `username`: the name of the user to login and run commands
    - `password`: password for ssh password based authentication
    - `identity`: path to ssh private key for key based authentication

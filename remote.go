@@ -74,6 +74,9 @@ func (r *Remote) Connect() error {
 			r.sshConfig.ClientConfig.Auth = r.sshConfig.ClientConfig.Auth[1:]
 		}
 	}
+	if client == nil {
+		return fmt.Errorf("Failed to connect to %s", r.Host.Addr)
+	}
 	session, err := client.NewSession()
 	if err != nil {
 		return fmt.Errorf("Failed to create session: %s", err)

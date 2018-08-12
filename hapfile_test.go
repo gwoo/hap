@@ -411,7 +411,7 @@ file = environment
 [include]
 path = TestHostsfile
 
-[cluster "together"]
+[deploy "together"]
 host = one
 host = two
 build = init

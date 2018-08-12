@@ -5,7 +5,6 @@
 package hap
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -20,7 +19,7 @@ func TestNewClientConfig(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for _, auth := range clientConfig.Auth {
-		fmt.Printf("%#v\n", auth)
+	if len(clientConfig.Auth) != 3 {
+		t.Error("There should be 3 auth methods")
 	}
 }

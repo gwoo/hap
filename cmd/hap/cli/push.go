@@ -30,6 +30,7 @@ func (cmd *PushCmd) Help() string {
 
 // Run takes a remote and pushes to it
 func (cmd *PushCmd) Run(remote *hap.Remote) (string, error) {
+	fmt.Printf("[%s] connecting to %s\n", remote.Host.Name, remote.Host.Addr)
 	if err := remote.Push(); err != nil {
 		result := fmt.Sprintf("[%s] push failed.", remote.Host.Name)
 		return result, err

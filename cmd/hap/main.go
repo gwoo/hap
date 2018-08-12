@@ -49,7 +49,7 @@ func main() {
 		run(nil, command)
 		return
 	}
-	if *host == "" {
+	if _, ok := command.(*cli.DeployCmd); !ok && *host == "" {
 		fmt.Println("Missing host Please specify -h or --host=")
 		os.Exit(2)
 	}

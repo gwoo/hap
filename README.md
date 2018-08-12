@@ -34,7 +34,7 @@ linux/amd64
  - Run `hap -h <host> build`
 
 ## Environment Variables
-Hap exports `HAP_HOSTNAME`, `HAP_USER`, `HAP_ADDR` for use in scripts. You can add your own by using the `env` section or the `env` statement in the `host` section.
+Hap exports `HAP_HOSTNAME`, `HAP_USER`, `HAP_ADDR`, `HAP_IP`, `HAP_PORT` for use in scripts. You can add your own by using the `env` section or the `env` statement in the `host` section.
 
 ## Hapfile
 The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax. There are 5 sections, `default`, `host`, `build`, `include`, and `env`. The `default` section holds host config that will be applied to all hosts. The `host` section holds a named host config. A host config includes `addr`, `username`, `password`, `identity`, `build`, and `cmd`, `env`. Only `addr` is required. The `identity` should point to a local ssh private key that has access to the host via the authorized_keys. The `build` section holds mulitple cmds that could be applied to a host. Multiple `build`, `cmd`, or `env` are permitted for each host. In addition, an `include` section accepts multiple `path` statements and an `env` section accepts multiple `file` statements.

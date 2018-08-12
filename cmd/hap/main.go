@@ -16,7 +16,6 @@ import (
 	flag "github.com/ogier/pflag"
 )
 
-var cluster = flag.StringP("cluster", "c", "", "Cluster of hosts to use for commands.")
 var host = flag.StringP("host", "h", "", "Host to use for commands. Use glob patterns to match multiple hosts. Use --host=* for all hosts.")
 var hapfile = flag.StringP("file", "f", "Hapfile", "Location of a Hapfile.")
 var help = flag.BoolP("help", "", false, "Show help")
@@ -50,8 +49,8 @@ func main() {
 		run(nil, command)
 		return
 	}
-	if *host == "" && *cluster == "" {
-		fmt.Println("Missing host or cluster flag: Please specify -h or --host=, -c or --cluster=")
+	if *host == "" {
+		fmt.Println("Missing host Please specify -h or --host=")
 		os.Exit(2)
 	}
 	hf, err := hap.NewHapfile(*hapfile)
@@ -59,8 +58,9 @@ func main() {
 		fmt.Println(err)
 		os.Exit(2)
 	}
+	deploy := flag.Arg(1)
 	var hosts = make(map[string]*hap.Host, 0)
-	if c, ok := hf.Clusters[*cluster]; ok {
+	if c, ok := hf.Deploys[deploy]; ok {
 		for _, n := range c.Host {
 			hosts[n] = hf.Host(n)
 		}

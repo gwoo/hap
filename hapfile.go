@@ -18,12 +18,12 @@ import (
 
 // Hapfile defines the hosts, builds, and default
 type Hapfile struct {
-	Default  Default
-	Clusters map[string]*Cluster `gcfg:"cluster"`
-	Hosts    map[string]*Host    `gcfg:"host"`
-	Builds   map[string]*Build   `gcfg:"build"`
-	Include  Include             `gcfg:"include"`
-	Env      Env                 `gcfg:"env"`
+	Default Default
+	Deploys map[string]*Deploy `gcfg:"deploy"`
+	Hosts   map[string]*Host   `gcfg:"host"`
+	Builds  map[string]*Build  `gcfg:"build"`
+	Include Include            `gcfg:"include"`
+	Env     Env                `gcfg:"env"`
 }
 
 // NewHapfile constructs a new hapfile config
@@ -37,9 +37,9 @@ func NewHapfile(file string) (Hapfile, error) {
 		if err != nil {
 			return hf, err
 		}
-		for n, c := range nhf.Clusters {
-			if _, ok := hf.Clusters[n]; !ok {
-				hf.Clusters[n] = c
+		for n, c := range nhf.Deploys {
+			if _, ok := hf.Deploys[n]; !ok {
+				hf.Deploys[n] = c
 			}
 		}
 		for n, h := range nhf.Hosts {
@@ -52,7 +52,7 @@ func NewHapfile(file string) (Hapfile, error) {
 				hf.Builds[n] = b
 			}
 		}
-		for _, c := range nhf.Clusters {
+		for _, c := range nhf.Deploys {
 			for _, n := range c.Host {
 				if _, ok := hf.Hosts[n]; ok {
 					hf.Hosts[n].Build = append(hf.Hosts[n].Build, c.Build...)
@@ -73,7 +73,7 @@ func NewHapfile(file string) (Hapfile, error) {
 			host.Env[i], host.Env[j] = host.Env[j], host.Env[i]
 		}
 	}
-	for _, c := range hf.Clusters {
+	for _, c := range hf.Deploys {
 		for _, n := range c.Host {
 			if _, ok := hf.Hosts[n]; ok {
 				hf.Hosts[n].Build = append(hf.Hosts[n].Build, c.Build...)
@@ -88,8 +88,8 @@ func NewHapfile(file string) (Hapfile, error) {
 func include(file string) (Hapfile, error) {
 	var hf Hapfile
 	err := gcfg.ReadFileInto(&hf, file)
-	if hf.Clusters == nil {
-		hf.Clusters = make(map[string]*Cluster, 0)
+	if hf.Deploys == nil {
+		hf.Deploys = make(map[string]*Deploy, 0)
 	}
 	if hf.Hosts == nil {
 		hf.Hosts = make(map[string]*Host, 0)
@@ -145,8 +145,8 @@ func (h Hapfile) String() string {
 	return string(b)
 }
 
-// Cluster describes a group of remote machine
-type Cluster struct {
+// Deploy describes a group of remote machine
+type Deploy struct {
 	Host  []string
 	Build []string
 	Cmd   []string

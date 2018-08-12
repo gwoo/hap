@@ -306,7 +306,7 @@ addr = "10.0.0.2:22"
 [env]
 file = environment
 
-[cluster "together"]
+[deploy "together"]
 host = one
 host = two
 build = init

@@ -52,6 +52,11 @@ The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax
    - `build`: one or more groups of commands to run
    - `cmd`: one or more commands to run on a specific host
    - `env`: one or more environment files to apply to this host (can override env sections)
+ - `deploy`: Holds the configuration for a machine
+   - `host`: one or more hosts
+   - `build`: one or more groups of commands to run
+   - `cmd`: one or more commands to run on a specific host
+   - `env`: one or more environment files to apply to this host (can override env sections)
  - `build`: sets of commands to run
    - `cmd`: one or more commands to run
  - `default` : Holds the standard configurations that can be applied to all hosts

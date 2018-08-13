@@ -62,7 +62,9 @@ func main() {
 	var hosts = make(map[string]*hap.Host, 0)
 	if c, ok := hf.Deploys[deploy]; ok {
 		for _, n := range c.Host {
-			hosts[n] = hf.Host(n)
+			if *host == "" || *host == n {
+				hosts[n] = hf.Host(n)
+			}
 		}
 	} else if *host != "" {
 		hosts = hf.GetHosts(*host)

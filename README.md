@@ -21,11 +21,11 @@ Make sure every build script is executable before committing to the local repo.
 
 darwin/amd64
 
-	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.3/hap-darwin-amd64; chmod a+x /usr/local/bin/hap
+	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.5/hap-darwin-amd64; chmod a+x /usr/local/bin/hap
 
 linux/amd64
 
-	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.3/hap-linux-amd64; chmod a+x /usr/local/bin/hap
+	curl -L -C - -o /usr/local/bin/hap https://github.com/gwoo/hap/releases/download/v2.5/hap-linux-amd64; chmod a+x /usr/local/bin/hap
 
 
 ## Basic Workflow
@@ -42,17 +42,14 @@ The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax
 ### sections
  - `host`: Holds the configuration for a machine
    - `addr`: the host:port of the remote machine
-<<<<<<< HEAD
    - `dir`: base directory on the remote machine
-=======
->>>>>>> Update README
    - `username`: the name of the user to login and run commands
    - `password`: password for ssh password based authentication
    - `identity`: path to ssh private key for key based authentication
    - `build`: one or more groups of commands to run
    - `cmd`: one or more commands to run on a specific host
    - `env`: one or more environment files to apply to this host (can override env sections)
- - `deploy`: Holds the configuration for a machine
+ - `deploy`: Holds the configuration for a deploy
    - `host`: one or more hosts
    - `build`: one or more groups of commands to run
    - `cmd`: one or more commands to run on a specific host
@@ -69,7 +66,7 @@ The Hapfile uses [git-config](http://git-scm.com/docs/git-config#_syntax) syntax
 
 ## Example Hapfile
 A default build is specified, so init.sh and update.sh are executed for each host.
-Host `one` specifies two commands, notify.sh and cleanup.sh, to be run after the default build commands. For host `one`, the `HAP_HOSTNAME` will be `one`, the `HAP_USER` will be `root`, and the `HAP_ADDR` will be `10.0.20.10:22`. Host `two` specifies no commands, so only the default build will be applied. For host `two`, the `HAP_HOSTNAME` will be `two`, the `HAP_USER` will be `admin`, and the `HAP_ADDR` will be `10.0.20.11:22`.
+Host `one` specifies two commands, notify.sh and cleanup.sh, to be run after the default build commands. For host `one`, the `HAP_HOSTNAME` will be `one`, the `HAP_USER` will be `root`, and the `HAP_ADDR` will be `10.0.20.10:22`. Host `two` specifies no commands, so only the default build will be applied. For host `two`, the `HAP_HOSTNAME` will be `two`, the `HAP_USER` will be `admin`, and the `HAP_ADDR` will be `10.0.20.11:22`. There is also a `deploy` that will return the hostname for `one` and `two`.
 
 	[default]
 	username = "root"
@@ -86,25 +83,32 @@ Host `one` specifies two commands, notify.sh and cleanup.sh, to be run after the
 	identity = "~/.ssh/admin_rsa"
 	addr = "10.0.20.11:22"
 
+	[deploy "get-hostname"]
+	host = one
+	host = two
+	cmd = hostname
+
 	[build "initialize"]
 	cmd = ./init.sh
 	cmd = ./update.sh
 	cmd = echo "initialized"
 
 ## Usage
-	Usage of ./bin/hap:
-	      --dry=false: Show commands without running them.
-	  -f, --file="Hapfile": Location of a Hapfile.
-	      --force=false: Force build even if it happened before.
-	      --help=false: Show help
-	  -h, --host="": Host to use for commands. Use glob patterns to match multiple hosts. Use --host=* for all hosts.
+		Usage of ./bin/hap:
+				--dry=false: Show commands without running them.
+		-f, --file="Hapfile": Location of a Hapfile.
+				--force=false: Force build even if it happened before.
+				--help=false: Show help
+		-h, --host="": Host to use for commands. Use glob patterns to match multiple hosts. Use --host=* for all hosts.
+		-v, --verbose=false: [deprecated] Verbose mode is always on
 
-	Available Commands:
-	hap build          Run the builds and commands from the Hapfile.
-	hap c <command>    Run an arbitrary command on the remote host.
-	hap create <name>  Create a new Hapfile at <name>.
-	hap exec <script>  Execute a script on the remote host.
-	hap push           Push current repo to the remote.
+		Available Commands:
+		hap build	        Run the builds and commands from the Hapfile.
+		hap c <command>		Run an arbitrary command on the remote host.
+		hap create <name>	Create a new Hapfile at <name>.
+		hap deploy <name>	Run the named deploy defined in the Hapfile.
+		hap exec <script>	Execute a script on the remote host.
+		hap push		Push current repo to the remote.
 
 ## Advanced Usage
 Sometimes you want to `build` more than one host. If the hosts follow a similar pattern

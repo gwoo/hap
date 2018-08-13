@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/url"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -220,12 +220,7 @@ func (r *Remote) Execute(commands []string) error {
 
 // Env returns the preset environment variables to pass to execute
 func (r *Remote) Env() string {
-	var host, port string
-	u, err := url.Parse(r.Host.Addr)
-	if err == nil {
-		host = u.Hostname()
-		port = u.Port()
-	}
+	host, port, _ := net.SplitHostPort(r.Host.Addr)
 	return fmt.Sprint(
 		"export HAP_HOSTNAME=\"", r.Host.Name, "\";",
 		"export HAP_ADDR=\"", r.Host.Addr, "\";",

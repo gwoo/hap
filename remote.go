@@ -106,7 +106,7 @@ func (r *Remote) Initialize() error {
 		b = b + " -i " + r.sshConfig.Identity
 	}
 	b = b + " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
-	err := ioutil.WriteFile("/tmp/hap-ssh-"+r.Host.Name, []byte(b), 0777)
+	err := ioutil.WriteFile(".git/hap-ssh-"+r.Host.Name, []byte(b), 0777)
 	if err != nil {
 		return fmt.Errorf("1 %s\n", err)
 	}
@@ -139,7 +139,7 @@ func (r *Remote) Push() error {
 	if err := r.Initialize(); err != nil {
 		return fmt.Errorf("%s\n", err)
 	}
-	os.Setenv("GIT_SSH", "/tmp/hap-ssh-"+r.Host.Name)
+	os.Setenv("GIT_SSH", ".git/hap-ssh-"+r.Host.Name)
 
 	if output, err := r.Git.Push(branch); err != nil {
 		return fmt.Errorf("%s\n%s\n", string(output), err)

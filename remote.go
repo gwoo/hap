@@ -139,7 +139,8 @@ func (r *Remote) Push() error {
 	if err := r.Initialize(); err != nil {
 		return fmt.Errorf("%s\n", err)
 	}
-	os.Setenv("GIT_SSH", ".git/hap-ssh-"+r.Host.Name)
+	cwd, _ := os.Getwd()
+	os.Setenv("GIT_SSH", cwd+"/.git/hap-ssh-"+r.Host.Name)
 
 	if output, err := r.Git.Push(branch); err != nil {
 		return fmt.Errorf("%s\n%s\n", string(output), err)

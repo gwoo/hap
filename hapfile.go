@@ -52,12 +52,12 @@ func NewHapfile(file string) (Hapfile, error) {
 				hf.Builds[n] = b
 			}
 		}
-		for _, c := range nhf.Deploys {
-			for _, n := range c.Host {
+		for _, d := range nhf.Deploys {
+			for _, n := range d.Host {
 				if _, ok := hf.Hosts[n]; ok {
-					hf.Hosts[n].Build = append(hf.Hosts[n].Build, c.Build...)
-					hf.Hosts[n].Cmd = append(hf.Hosts[n].Cmd, c.Cmd...)
-					hf.Hosts[n].Env = append(hf.Hosts[n].Env, c.Env...)
+					hf.Hosts[n].Build = d.Build
+					hf.Hosts[n].Cmd = d.Cmd
+					hf.Hosts[n].Env = append(hf.Hosts[n].Env, d.Env...)
 				}
 			}
 		}
@@ -73,12 +73,12 @@ func NewHapfile(file string) (Hapfile, error) {
 			host.Env[i], host.Env[j] = host.Env[j], host.Env[i]
 		}
 	}
-	for _, c := range hf.Deploys {
-		for _, n := range c.Host {
+	for _, d := range hf.Deploys {
+		for _, n := range d.Host {
 			if _, ok := hf.Hosts[n]; ok {
-				hf.Hosts[n].Build = append(hf.Hosts[n].Build, c.Build...)
-				hf.Hosts[n].Cmd = append(hf.Hosts[n].Cmd, c.Cmd...)
-				hf.Hosts[n].Env = append(hf.Hosts[n].Env, c.Env...)
+				hf.Hosts[n].Build = d.Build
+				hf.Hosts[n].Cmd = d.Cmd
+				hf.Hosts[n].Env = append(hf.Hosts[n].Env, d.Env...)
 			}
 		}
 	}
@@ -192,6 +192,7 @@ func (h *Host) SetDefaults(d Default) {
 	}
 }
 
+// GetDir returns the current working directory
 func (h *Host) GetDir() string {
 	if h.Dir != "" {
 		return h.Dir

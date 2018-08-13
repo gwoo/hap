@@ -172,6 +172,9 @@ type Host struct {
 
 // SetDefaults fills in missing host specific configs with defaults
 func (h *Host) SetDefaults(d Default) {
+	if h.Addr == "" {
+		h.Addr = d.Addr
+	}
 	if h.Dir == "" {
 		h.Dir = d.Dir
 	}

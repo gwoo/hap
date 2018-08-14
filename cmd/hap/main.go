@@ -49,28 +49,31 @@ func main() {
 		run(nil, command)
 		return
 	}
-	if _, ok := command.(*cli.DeployCmd); !ok && *host == "" {
-		fmt.Println("Missing host Please specify -h or --host=")
-		os.Exit(2)
-	}
 	hf, err := hap.NewHapfile(*hapfile)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)
 	}
-	deploy := flag.Arg(1)
 	var hosts = make(map[string]*hap.Host, 0)
-	if c, ok := hf.Deploys[deploy]; ok {
-		for _, n := range c.Host {
-			if *host == "" || *host == n {
-				hosts[n] = hf.Host(n)
-			}
+
+	if _, ok := command.(*cli.DeployCmd); ok {
+		deploy := flag.Arg(1)
+		if *host == "" {
+			*host = "*"
+		}
+		hosts, err = hf.GetDeployHosts(deploy, *host)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 	} else if *host != "" {
 		hosts = hf.GetHosts(*host)
+	} else {
+		fmt.Println("Missing host please specify -h or --host=")
+		os.Exit(2)
 	}
 	if len(hosts) == 0 {
-		fmt.Printf("No hosts found for `%s`\n", *host)
+		fmt.Println("No host found")
 		return
 	}
 	var wg sync.WaitGroup

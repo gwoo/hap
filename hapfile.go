@@ -20,10 +20,11 @@ import (
 type Hapfile struct {
 	Default Default
 	Deploys map[string]*Deploy `gcfg:"deploy"`
-	Hosts   map[string]*Host   `gcfg:"host"`
-	Builds  map[string]*Build  `gcfg:"build"`
-	Include Include            `gcfg:"include"`
-	Env     Env                `gcfg:"env"`
+	deploys map[string]map[string]*Host
+	Hosts   map[string]*Host  `gcfg:"host"`
+	Builds  map[string]*Build `gcfg:"build"`
+	Include Include           `gcfg:"include"`
+	Env     Env               `gcfg:"env"`
 }
 
 // NewHapfile constructs a new hapfile config
@@ -32,6 +33,7 @@ func NewHapfile(file string) (Hapfile, error) {
 	if err != nil {
 		return hf, err
 	}
+	hf.deploys = map[string]map[string]*Host{}
 	for _, file := range hf.Include.Path {
 		nhf, err := include(file)
 		if err != nil {
@@ -52,12 +54,11 @@ func NewHapfile(file string) (Hapfile, error) {
 				hf.Builds[n] = b
 			}
 		}
-		for _, d := range nhf.Deploys {
-			for _, n := range d.Host {
+		for d, deploy := range nhf.Deploys {
+			hf.deploys[d] = map[string]*Host{}
+			for _, n := range deploy.Host {
 				if _, ok := hf.Hosts[n]; ok {
-					hf.Hosts[n].Build = d.Build
-					hf.Hosts[n].Cmd = d.Cmd
-					hf.Hosts[n].Env = append(hf.Hosts[n].Env, d.Env...)
+					hf.deploys[d][n] = hf.newDeployHost(hf.Hosts[n], deploy)
 				}
 			}
 		}
@@ -73,12 +74,11 @@ func NewHapfile(file string) (Hapfile, error) {
 			host.Env[i], host.Env[j] = host.Env[j], host.Env[i]
 		}
 	}
-	for _, d := range hf.Deploys {
-		for _, n := range d.Host {
+	for d, deploy := range hf.Deploys {
+		hf.deploys[d] = map[string]*Host{}
+		for _, n := range deploy.Host {
 			if _, ok := hf.Hosts[n]; ok {
-				hf.Hosts[n].Build = d.Build
-				hf.Hosts[n].Cmd = d.Cmd
-				hf.Hosts[n].Env = append(hf.Hosts[n].Env, d.Env...)
+				hf.deploys[d][n] = hf.newDeployHost(hf.Hosts[n], deploy)
 			}
 		}
 	}
@@ -100,9 +100,62 @@ func include(file string) (Hapfile, error) {
 	return hf, err
 }
 
+func (hf Hapfile) newDeployHost(host *Host, d *Deploy) *Host {
+	h := &Host{}
+	h.Name = host.Name
+	h.Addr = host.Addr
+	h.Dir = host.Dir
+	h.Username = host.Username
+	h.Identity = host.Identity
+	h.Password = host.Password
+	h.Env = append(host.Env, d.Env...)
+	h.Build = d.Build
+	h.Cmd = d.Cmd
+	return h
+}
+
+// GetDeployHosts finds a list of hosts matching name string
+func (hf Hapfile) GetDeployHosts(deploy, host string) (map[string]*Host, error) {
+	hosts, ok := hf.deploys[deploy]
+	if !ok {
+		return map[string]*Host{}, fmt.Errorf("Deploy '%s' not found\n", deploy)
+	}
+	keys := []string{}
+	for key := range hosts {
+		if matched, _ := filepath.Match(host, key); matched == true {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	results := make(map[string]*Host)
+	for _, key := range keys {
+		results[key] = hf.DeployHost(deploy, key)
+	}
+	return results, nil
+}
+
+// DeployHost takes a name and returns the host
+// If the name is empty and default addr exists return default.
+// If no default is set it returns a random host.
+func (hf Hapfile) DeployHost(deploy, host string) *Host {
+	if h, ok := hf.deploys[deploy][host]; ok {
+		h.Name = host
+		h.SetDefaults(hf.Default)
+		h.BuildCmds(hf.Builds)
+		return h
+	}
+	if hf.Default.Addr != "" {
+		h := Host(hf.Default)
+		h.Name = "default"
+		h.BuildCmds(hf.Builds)
+		return &h
+	}
+	return nil
+}
+
 // GetHosts finds a list of hosts matching name string
-func (h Hapfile) GetHosts(name string) map[string]*Host {
-	hosts := h.Hosts
+func (hf Hapfile) GetHosts(name string) map[string]*Host {
+	hosts := hf.Hosts
 	keys := []string{}
 	for key := range hosts {
 		if matched, _ := filepath.Match(name, key); matched == true {
@@ -112,7 +165,7 @@ func (h Hapfile) GetHosts(name string) map[string]*Host {
 	sort.Strings(keys)
 	results := make(map[string]*Host)
 	for _, key := range keys {
-		results[key] = h.Host(key)
+		results[key] = hf.Host(key)
 	}
 	return results
 }
@@ -120,25 +173,25 @@ func (h Hapfile) GetHosts(name string) map[string]*Host {
 // Host takes a name and returns the host
 // If the name is empty and default addr exists return default.
 // If no default is set it returns a random host.
-func (h Hapfile) Host(name string) *Host {
-	if host, ok := h.Hosts[name]; ok {
+func (hf Hapfile) Host(name string) *Host {
+	if host, ok := hf.Hosts[name]; ok {
 		host.Name = name
-		host.SetDefaults(h.Default)
-		host.BuildCmds(h.Builds)
+		host.SetDefaults(hf.Default)
+		host.BuildCmds(hf.Builds)
 		return host
 	}
-	if h.Default.Addr != "" {
-		host := Host(h.Default)
+	if hf.Default.Addr != "" {
+		host := Host(hf.Default)
 		host.Name = "default"
-		host.BuildCmds(h.Builds)
+		host.BuildCmds(hf.Builds)
 		return &host
 	}
 	return nil
 }
 
 // String returns the hapfile config as json
-func (h Hapfile) String() string {
-	b, err := json.Marshal(h)
+func (hf Hapfile) String() string {
+	b, err := json.Marshal(hf)
 	if err != nil {
 		return ""
 	}

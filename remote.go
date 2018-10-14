@@ -191,13 +191,13 @@ func (r *Remote) PushSubmodules() error {
 // First execute builds specified in Hapfile
 // Then execute any cmds specified in Hapfile
 func (r *Remote) Build(force bool) error {
-	cmds := []string{"cd " + r.Dir, "touch .happended"}
+	cmds := []string{"cd " + r.Dir, "HAP_DIR=`pwd`", "touch .happended"}
 	if !force {
 		cmds = append(cmds, happened)
 	}
 	cmds = r.Host.AddEnv(cmds)
 	cmds = append(cmds, r.Host.Cmds()...)
-	cmds = append(cmds, "echo `git rev-parse HEAD` > .happended")
+	cmds = append(cmds, "cd $HAP_DIR; echo `git rev-parse HEAD` > .happended")
 	return r.Execute(cmds)
 }
 

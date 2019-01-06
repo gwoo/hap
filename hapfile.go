@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"gopkg.in/gcfg.v1"
+	gcfg "gopkg.in/gcfg.v1"
 )
 
 // Hapfile defines the hosts, builds, and default
@@ -118,7 +118,7 @@ func (hf Hapfile) newDeployHost(host *Host, d *Deploy) *Host {
 func (hf Hapfile) GetDeployHosts(deploy, host string) (map[string]*Host, error) {
 	hosts, ok := hf.deploys[deploy]
 	if !ok {
-		return map[string]*Host{}, fmt.Errorf("Deploy '%s' not found\n", deploy)
+		return map[string]*Host{}, fmt.Errorf("deploy '%s' not found", deploy)
 	}
 	keys := []string{}
 	for key := range hosts {

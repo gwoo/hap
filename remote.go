@@ -17,7 +17,7 @@ import (
 	"sync"
 
 	"golang.org/x/crypto/ssh"
-	"gopkg.in/gcfg.v1"
+	gcfg "gopkg.in/gcfg.v1"
 )
 
 // Formatted script that checks if the build happened.
@@ -25,13 +25,14 @@ const happened string = "if [ \"$(git rev-parse HEAD)\" = \"$(cat .happended)\" 
 
 // Remote defines the remote machine to provision
 type Remote struct {
-	Git       Git
-	Dir       string
-	Host      *Host
-	env       []string
-	sshConfig SSHConfig
-	session   *ssh.Session
-	writer    io.Writer
+	Git        Git
+	Dir        string
+	Host       *Host
+	env        []string
+	gitSSHFile string
+	sshConfig  SSHConfig
+	session    *ssh.Session
+	writer     io.Writer
 }
 
 // NewRemote constructs a new remote machine
@@ -50,10 +51,11 @@ func NewRemote(host *Host) (*Remote, error) {
 	dir := host.GetDir()
 	repo := fmt.Sprintf("ssh://%s@%s/~/%s", host.Username, host.Addr, dir)
 	r := &Remote{
-		sshConfig: sshConfig,
-		Git:       Git{Repo: repo, Key: sshConfig.Identity},
-		Dir:       dir,
-		Host:      host,
+		sshConfig:  sshConfig,
+		Git:        Git{Repo: repo, Key: sshConfig.Identity},
+		Dir:        dir,
+		Host:       host,
+		gitSSHFile: filepath.Join(os.TempDir(), "hap-ssh-"+host.Name),
 	}
 	return r, nil
 }
@@ -65,7 +67,7 @@ func (r *Remote) Connect() error {
 	}
 	var client *ssh.Client
 	var err error
-	for _ = range r.sshConfig.ClientConfig.Auth {
+	for range r.sshConfig.ClientConfig.Auth {
 		client, err = ssh.Dial("tcp", r.sshConfig.Addr, r.sshConfig.ClientConfig)
 		if err != nil {
 			if len(r.sshConfig.ClientConfig.Auth) == 1 {
@@ -106,9 +108,9 @@ func (r *Remote) Initialize() error {
 		b = b + " -i " + r.sshConfig.Identity
 	}
 	b = b + " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
-	err := ioutil.WriteFile(".git/hap-ssh-"+r.Host.Name, []byte(b), 0777)
+	err := ioutil.WriteFile(r.gitSSHFile, []byte(b), 0777)
 	if err != nil {
-		return fmt.Errorf("1 %s\n", err)
+		return fmt.Errorf("error writing git_ssh file: %s", err)
 	}
 	commands := []string{
 		fmt.Sprintf("GIT_DIR=\"%s\"", r.Dir),
@@ -130,20 +132,18 @@ func (r *Remote) Push() error {
 	}
 	b, err := r.Git.RevParse()
 	if err != nil {
-		return fmt.Errorf("%s\n%s\n", string(b), err)
+		return fmt.Errorf("%s\n%s", string(b), err)
 	}
 	branch := strings.TrimSpace(string(b))
 	if branch == "HEAD" {
 		branch = fmt.Sprintf("%s:refs/heads/happened", branch)
 	}
 	if err := r.Initialize(); err != nil {
-		return fmt.Errorf("%s\n", err)
+		return fmt.Errorf("%s", err)
 	}
-	cwd, _ := os.Getwd()
-	os.Setenv("GIT_SSH", cwd+"/.git/hap-ssh-"+r.Host.Name)
-
+	os.Setenv("GIT_SSH", r.gitSSHFile)
 	if output, err := r.Git.Push(branch); err != nil {
-		return fmt.Errorf("%s\n%s\n", string(output), err)
+		return fmt.Errorf("%s\n%s", string(output), err)
 	}
 	return nil
 }
@@ -158,7 +158,7 @@ func (r *Remote) PushSubmodules() error {
 		return nil
 	}
 	if output, err := r.Git.UpdateSubmodules(); err != nil {
-		return fmt.Errorf("%s\n%s\n", string(output), err)
+		return fmt.Errorf("%s\n%s", string(output), err)
 	}
 	var wg sync.WaitGroup
 	errors := []string{}

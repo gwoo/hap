@@ -37,12 +37,7 @@ type Remote struct {
 
 // NewRemote constructs a new remote machine
 func NewRemote(host *Host) (*Remote, error) {
-	sshConfig := SSHConfig{
-		Addr:     host.Addr,
-		Username: host.Username,
-		Identity: host.Identity,
-		Password: host.Password,
-	}
+	sshConfig := NewSSHConfig(host)
 	clientConfig, err := NewClientConfig(sshConfig)
 	if err != nil {
 		return nil, err
@@ -56,6 +51,15 @@ func NewRemote(host *Host) (*Remote, error) {
 		Dir:        dir,
 		Host:       host,
 		gitSSHFile: filepath.Join(os.TempDir(), "hap-ssh-"+host.Name),
+	}
+	var b = "#!/bin/sh\n\nssh "
+	if r.sshConfig.Identity != "" {
+		b = b + " -i " + r.sshConfig.Identity
+	}
+	b = b + " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
+	err = ioutil.WriteFile(r.gitSSHFile, []byte(b), 0777)
+	if err != nil {
+		return r, fmt.Errorf("error writing git_ssh file: %s, error: %s", r.gitSSHFile, err)
 	}
 	return r, nil
 }
@@ -102,15 +106,6 @@ func (r *Remote) Close() error {
 func (r *Remote) Initialize() error {
 	if err := r.Connect(); err != nil {
 		return err
-	}
-	var b = "#!/bin/sh\n\nssh "
-	if r.sshConfig.Identity != "" {
-		b = b + " -i " + r.sshConfig.Identity
-	}
-	b = b + " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
-	err := ioutil.WriteFile(r.gitSSHFile, []byte(b), 0777)
-	if err != nil {
-		return fmt.Errorf("error writing git_ssh file: %s", err)
 	}
 	commands := []string{
 		fmt.Sprintf("GIT_DIR=\"%s\"", r.Dir),
@@ -167,9 +162,10 @@ func (r *Remote) PushSubmodules() error {
 		go func(module *submodule) {
 			defer wg.Done()
 			sr := &Remote{
-				sshConfig: r.sshConfig,
-				Dir:       filepath.Join(r.Dir, module.Path),
-				Host:      r.Host,
+				gitSSHFile: r.gitSSHFile,
+				sshConfig:  r.sshConfig,
+				Dir:        filepath.Join(r.Dir, module.Path),
+				Host:       r.Host,
 				Git: Git{
 					Repo: fmt.Sprint(r.Git.Repo, "/", module.Path),
 					Work: module.Path,

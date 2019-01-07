@@ -428,7 +428,6 @@ cmd = "echo init"`
 	if len(hosts) < 2 {
 		t.Error("Expected at least two hosts")
 	}
-
 	dhosts, err := hf.GetDeployHosts("together", "*")
 	if err != nil {
 		t.Error(err)

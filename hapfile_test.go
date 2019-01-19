@@ -1,5 +1,5 @@
 // Hap - the simple and effective provisioner
-// Copyright (c) 2017 GWoo (https://github.com/gwoo)
+// Copyright (c) 2019 GWoo (https://github.com/gwoo)
 // The BSD License http://opensource.org/licenses/bsd-license.php.
 
 package hap
@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"testing"
 
-	"gopkg.in/gcfg.v1"
+	gcfg "gopkg.in/gcfg.v1"
 )
 
 func TestGetHostsString(t *testing.T) {
@@ -428,7 +428,6 @@ cmd = "echo init"`
 	if len(hosts) < 2 {
 		t.Error("Expected at least two hosts")
 	}
-
 	dhosts, err := hf.GetDeployHosts("together", "*")
 	if err != nil {
 		t.Error(err)

@@ -1,5 +1,5 @@
 // Hap - the simple and effective provisioner
-// Copyright (c) 2017 GWoo (https://github.com/gwoo)
+// Copyright (c) 2019 GWoo (https://github.com/gwoo)
 // The BSD License http://opensource.org/licenses/bsd-license.php.
 
 package hap
@@ -17,7 +17,7 @@ import (
 	"sync"
 
 	"golang.org/x/crypto/ssh"
-	"gopkg.in/gcfg.v1"
+	gcfg "gopkg.in/gcfg.v1"
 )
 
 // Formatted script that checks if the build happened.
@@ -25,23 +25,19 @@ const happened string = "if [ \"$(git rev-parse HEAD)\" = \"$(cat .happended)\" 
 
 // Remote defines the remote machine to provision
 type Remote struct {
-	Git       Git
-	Dir       string
-	Host      *Host
-	env       []string
-	sshConfig SSHConfig
-	session   *ssh.Session
-	writer    io.Writer
+	Git        Git
+	Dir        string
+	Host       *Host
+	env        []string
+	gitSSHFile string
+	sshConfig  SSHConfig
+	session    *ssh.Session
+	writer     io.Writer
 }
 
 // NewRemote constructs a new remote machine
 func NewRemote(host *Host) (*Remote, error) {
-	sshConfig := SSHConfig{
-		Addr:     host.Addr,
-		Username: host.Username,
-		Identity: host.Identity,
-		Password: host.Password,
-	}
+	sshConfig := NewSSHConfig(host)
 	clientConfig, err := NewClientConfig(sshConfig)
 	if err != nil {
 		return nil, err
@@ -50,10 +46,20 @@ func NewRemote(host *Host) (*Remote, error) {
 	dir := host.GetDir()
 	repo := fmt.Sprintf("ssh://%s@%s/~/%s", host.Username, host.Addr, dir)
 	r := &Remote{
-		sshConfig: sshConfig,
-		Git:       Git{Repo: repo, Key: sshConfig.Identity},
-		Dir:       dir,
-		Host:      host,
+		sshConfig:  sshConfig,
+		Git:        Git{Repo: repo, Key: sshConfig.Identity},
+		Dir:        dir,
+		Host:       host,
+		gitSSHFile: filepath.Join(os.TempDir(), "hap-ssh-"+host.Name),
+	}
+	var b = "#!/bin/sh\n\nssh "
+	if r.sshConfig.Identity != "" {
+		b = b + " -i " + r.sshConfig.Identity
+	}
+	b = b + " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
+	err = ioutil.WriteFile(r.gitSSHFile, []byte(b), 0777)
+	if err != nil {
+		return r, fmt.Errorf("error writing git_ssh file: %s, error: %s", r.gitSSHFile, err)
 	}
 	return r, nil
 }
@@ -65,7 +71,7 @@ func (r *Remote) Connect() error {
 	}
 	var client *ssh.Client
 	var err error
-	for _ = range r.sshConfig.ClientConfig.Auth {
+	for range r.sshConfig.ClientConfig.Auth {
 		client, err = ssh.Dial("tcp", r.sshConfig.Addr, r.sshConfig.ClientConfig)
 		if err != nil {
 			if len(r.sshConfig.ClientConfig.Auth) == 1 {
@@ -101,15 +107,6 @@ func (r *Remote) Initialize() error {
 	if err := r.Connect(); err != nil {
 		return err
 	}
-	var b = "#!/bin/sh\n\nssh "
-	if r.sshConfig.Identity != "" {
-		b = b + " -i " + r.sshConfig.Identity
-	}
-	b = b + " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o VerifyHostKeyDNS=no -o CheckHostIP=no $@"
-	err := ioutil.WriteFile(".git/hap-ssh-"+r.Host.Name, []byte(b), 0777)
-	if err != nil {
-		return fmt.Errorf("1 %s\n", err)
-	}
 	commands := []string{
 		fmt.Sprintf("GIT_DIR=\"%s\"", r.Dir),
 		fmt.Sprint("mkdir -p $GIT_DIR"),
@@ -130,20 +127,18 @@ func (r *Remote) Push() error {
 	}
 	b, err := r.Git.RevParse()
 	if err != nil {
-		return fmt.Errorf("%s\n%s\n", string(b), err)
+		return fmt.Errorf("%s\n%s", string(b), err)
 	}
 	branch := strings.TrimSpace(string(b))
 	if branch == "HEAD" {
 		branch = fmt.Sprintf("%s:refs/heads/happened", branch)
 	}
 	if err := r.Initialize(); err != nil {
-		return fmt.Errorf("%s\n", err)
+		return fmt.Errorf("%s", err)
 	}
-	cwd, _ := os.Getwd()
-	os.Setenv("GIT_SSH", cwd+"/.git/hap-ssh-"+r.Host.Name)
-
+	os.Setenv("GIT_SSH", r.gitSSHFile)
 	if output, err := r.Git.Push(branch); err != nil {
-		return fmt.Errorf("%s\n%s\n", string(output), err)
+		return fmt.Errorf("%s\n%s", string(output), err)
 	}
 	return nil
 }
@@ -158,7 +153,7 @@ func (r *Remote) PushSubmodules() error {
 		return nil
 	}
 	if output, err := r.Git.UpdateSubmodules(); err != nil {
-		return fmt.Errorf("%s\n%s\n", string(output), err)
+		return fmt.Errorf("%s\n%s", string(output), err)
 	}
 	var wg sync.WaitGroup
 	errors := []string{}
@@ -167,9 +162,10 @@ func (r *Remote) PushSubmodules() error {
 		go func(module *submodule) {
 			defer wg.Done()
 			sr := &Remote{
-				sshConfig: r.sshConfig,
-				Dir:       filepath.Join(r.Dir, module.Path),
-				Host:      r.Host,
+				gitSSHFile: r.gitSSHFile,
+				sshConfig:  r.sshConfig,
+				Dir:        filepath.Join(r.Dir, module.Path),
+				Host:       r.Host,
 				Git: Git{
 					Repo: fmt.Sprint(r.Git.Repo, "/", module.Path),
 					Work: module.Path,
@@ -191,13 +187,13 @@ func (r *Remote) PushSubmodules() error {
 // First execute builds specified in Hapfile
 // Then execute any cmds specified in Hapfile
 func (r *Remote) Build(force bool) error {
-	cmds := []string{"cd " + r.Dir, "touch .happended"}
+	cmds := []string{"cd " + r.Dir, "HAP_DIR=`pwd`", "touch .happended"}
 	if !force {
 		cmds = append(cmds, happened)
 	}
 	cmds = r.Host.AddEnv(cmds)
 	cmds = append(cmds, r.Host.Cmds()...)
-	cmds = append(cmds, "echo `git rev-parse HEAD` > .happended")
+	cmds = append(cmds, "cd $HAP_DIR; echo `git rev-parse HEAD` > .happended")
 	return r.Execute(cmds)
 }
 

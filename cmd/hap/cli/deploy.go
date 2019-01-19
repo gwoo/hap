@@ -1,5 +1,5 @@
 // Hap - the simple and effective provisioner
-// Copyright (c) 2017 GWoo (https://github.com/gwoo)
+// Copyright (c) 2019 GWoo (https://github.com/gwoo)
 // The BSD License http://opensource.org/licenses/bsd-license.php.
 
 package cli
@@ -35,7 +35,7 @@ func (cmd *DeployCmd) Run(remote *hap.Remote) (string, error) {
 			"[%s] --dry run.\n",
 			remote.Host.Name,
 		)
-		cmds := []string{"cd " + remote.Dir,}
+		cmds := []string{"cd " + remote.Dir}
 		cmds = remote.Host.AddEnv(cmds)
 		cmds = append(cmds, remote.Host.Cmds()...)
 		for _, cmd := range cmds {

@@ -1,5 +1,5 @@
 // Hap - the simple and effective provisioner
-// Copyright (c) 2017 GWoo (https://github.com/gwoo)
+// Copyright (c) 2019 GWoo (https://github.com/gwoo)
 // The BSD License http://opensource.org/licenses/bsd-license.php.
 
 package hap
@@ -26,16 +26,31 @@ type SSHConfig struct {
 	ClientConfig *ssh.ClientConfig
 }
 
+// NewSSHConfig converts a Host into the SSHConfig
+func NewSSHConfig(host *Host) SSHConfig {
+	if host.Username == "" {
+		u, _ := user.Current()
+		host.Username = u.Name
+	}
+	if strings.HasPrefix(host.Identity, ".") {
+		dir, _ := os.Getwd()
+		host.Identity = dir + host.Identity[1:]
+	}
+	config := SSHConfig{
+		Addr:     host.Addr,
+		Username: host.Username,
+		Identity: host.Identity,
+		Password: host.Password,
+	}
+	return config
+}
+
 // NewClientConfig constructs a new *ssh.ClientConfig
 func NewClientConfig(config SSHConfig) (*ssh.ClientConfig, error) {
 	methods := make([]ssh.AuthMethod, 0)
 	if sock, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
 		method := ssh.PublicKeysCallback(agent.NewClient(sock).Signers)
 		methods = append(methods, method)
-	}
-	if config.Username == "" {
-		u, _ := user.Current()
-		config.Username = u.Name
 	}
 	if config.Identity != "" {
 		method, err := NewPublicKeyMethod(config.Identity)
